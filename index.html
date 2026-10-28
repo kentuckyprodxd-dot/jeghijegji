@@ -1,0 +1,576 @@
+<title>Fără Lună</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Manrope:wght@500;700&display=swap">
+<style>
+  /* Layout: un singur cadru vertical 9:16 (ca un Reel/TikTok), centrat, cu subtitrări cinetice peste canvas */
+  :root {
+    --night: #05060d;
+    --ink: #f3f1ea;
+    --moon: #e9e4cf;
+    --glow: #9fb4ff;
+    --warn: #ff8a3d;
+    --muted: #8a90ad;
+    --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+    --f-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    background: var(--night);
+    color: var(--ink);
+    font-family: var(--f-body);
+    display: grid;
+    place-items: center;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage {
+    position: relative;
+    width: min(100%, calc((100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 9 / 16));
+    aspect-ratio: 9 / 16;
+    max-width: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 0 0 1px rgba(159, 180, 255, .12), 0 30px 80px rgba(0, 0, 0, .6);
+    user-select: none;
+    cursor: pointer;
+    container-type: inline-size;
+  }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .bars {
+    position: absolute; top: 10px; left: 10px; right: 10px;
+    display: flex; gap: 4px; z-index: 5;
+  }
+  .bars span { flex: 1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .22); overflow: hidden; }
+  .bars i { display: block; height: 100%; width: 0; background: var(--ink); }
+
+  .top {
+    position: absolute; top: 22px; left: 12px; right: 12px; z-index: 6;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .handle { font: 700 3.6cqw/1 var(--f-body); letter-spacing: .02em; opacity: .85; }
+  .btns { display: flex; gap: 6px; }
+  .btn {
+    width: 9cqw; height: 9cqw; min-width: 34px; min-height: 34px;
+    border: 0; border-radius: 50%;
+    background: rgba(5, 6, 13, .45); color: var(--ink);
+    display: grid; place-items: center; cursor: pointer;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .btn:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+  .btn svg { width: 50%; height: 50%; fill: currentColor; }
+
+  .eyebrow {
+    position: absolute; left: 7%; right: 7%; top: 13%; z-index: 4;
+    font: 500 3.3cqw/1.3 var(--f-display); letter-spacing: .14em; text-transform: uppercase;
+    color: var(--glow); text-align: center; text-wrap: balance;
+  }
+  .caption {
+    position: absolute; left: 7%; right: 7%; bottom: 11%; z-index: 4;
+    font: 800 7.2cqw/1.18 var(--f-display); text-align: center; text-wrap: balance;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, .75);
+  }
+  .caption.big { font-size: 9.4cqw; bottom: auto; top: 54%; }
+  .w { display: inline-block; opacity: 0; transform: translateY(.5em) scale(.92); filter: blur(6px);
+       animation: pop .55s cubic-bezier(.2, .9, .25, 1.25) forwards; }
+  .w.hl { color: var(--warn); }
+  .w.ok { color: var(--moon); }
+  .eyebrow .w { animation-duration: .4s; }
+  @keyframes pop { to { opacity: 1; transform: none; filter: none; } }
+
+  .overlay {
+    position: absolute; inset: 0; z-index: 8;
+    display: grid; place-items: center; align-content: center; gap: 14px;
+    background: radial-gradient(circle at 50% 50%, rgba(5, 6, 13, .15), rgba(5, 6, 13, .7));
+    text-align: center;
+  }
+  .play {
+    width: 22cqw; height: 22cqw; border-radius: 50%;
+    background: var(--ink); color: var(--night); border: 0;
+    display: grid; place-items: center; cursor: pointer;
+    box-shadow: 0 0 0 0 rgba(233, 228, 207, .5);
+    animation: pulse 1.8s ease-out infinite;
+  }
+  .play svg { width: 40%; height: 40%; fill: currentColor; margin-left: 6%; }
+  .play:focus-visible { outline: 3px solid var(--glow); outline-offset: 4px; }
+  .hint { font: 700 3.8cqw/1.3 var(--f-body); letter-spacing: .04em; color: var(--ink); opacity: .9; }
+  @keyframes pulse { to { box-shadow: 0 0 0 7cqw rgba(233, 228, 207, 0); } }
+
+  .paused {
+    position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; pointer-events: none;
+  }
+  .paused div {
+    width: 18cqw; height: 18cqw; border-radius: 50%; background: rgba(5, 6, 13, .55);
+    display: grid; place-items: center;
+  }
+  .paused svg { width: 40%; fill: var(--ink); }
+
+  .end { gap: 18px; }
+  .end h2 { margin: 0; font: 800 10cqw/1.05 var(--f-display); text-wrap: balance; }
+  .end p { margin: 0; font: 500 4cqw/1.4 var(--f-body); color: var(--muted); max-width: 80%; }
+  .replay {
+    font: 700 4.2cqw/1 var(--f-body); padding: 4cqw 7cqw; border-radius: 99px; border: 0;
+    background: var(--ink); color: var(--night); cursor: pointer;
+  }
+  .replay:focus-visible { outline: 3px solid var(--glow); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .w { animation-duration: .01s; filter: none; }
+    .play { animation: none; }
+  }
+</style>
+
+<div class="stage" id="stage" aria-label="Video animat: Ce-ar fi dacă Luna ar dispărea?">
+  <canvas id="cv"></canvas>
+  <div class="bars" id="bars"></div>
+  <div class="top">
+    <span class="handle">@științăîn60s</span>
+    <div class="btns">
+      <button class="btn" id="sound" aria-label="Sunet pornit/oprit">
+        <svg viewBox="0 0 24 24" id="sndIcon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+      </button>
+      <button class="btn" id="restart" aria-label="De la început">
+        <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="eyebrow" id="eyebrow"></div>
+  <div class="caption" id="caption"></div>
+
+  <div class="paused" id="paused" hidden><div><svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg></div></div>
+
+  <div class="overlay" id="start">
+    <button class="play" id="playBtn" aria-label="Pornește video">
+      <svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg>
+    </button>
+    <div class="hint">Apasă ca să pornești · cu sunet 🔊</div>
+  </div>
+
+  <div class="overlay end" id="end" hidden>
+    <h2>Vrei partea a&nbsp;2-a?</h2>
+    <p>Data viitoare: ce-ar fi dacă Pământul s-ar opri din rotație?</p>
+    <button class="replay" id="replay">Vezi din nou</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const W = 360, H = 640;
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const stage = document.getElementById('stage');
+  const capEl = document.getElementById('caption');
+  const eyeEl = document.getElementById('eyebrow');
+  const barsEl = document.getElementById('bars');
+
+  // ---------- utilitare ----------
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const easeInOut = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  const easeOut = k => 1 - Math.pow(1 - k, 3);
+  const easeIn = k => k * k * k;
+  const easeBack = k => { const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+  const seg = (t, a, b) => clamp((t - a) / (b - a));
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const mix = (c1, c2, k) => {
+    const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+    const a = p(c1), b = p(c2);
+    return `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], k))).join(',')})`;
+  };
+
+  const stars = Array.from({ length: 220 }, () => ({
+    x: rnd() * W, y: rnd() * H, r: rnd() * 1.3 + .25, ph: rnd() * 6.28, sp: rnd() * 2 + .6
+  }));
+  const burst = Array.from({ length: 70 }, () => ({ a: rnd() * 6.28, v: 60 + rnd() * 160, r: 1 + rnd() * 2.2 }));
+  const turtles = Array.from({ length: 10 }, (_, i) => ({
+    x: 30 + i * 32 + rnd() * 10, y: 590 + rnd() * 30,
+    a: -Math.PI / 2 + (rnd() - .5) * 2.6, sp: 10 + rnd() * 8, ph: rnd() * 6
+  }));
+  const craters = [[-.32, -.2, .18], [.25, .12, .22], [.05, .45, .12], [-.12, .18, .09], [.38, -.35, .1], [-.45, .35, .08]];
+
+  // ---------- elemente de desen ----------
+  function sky(top, bottom) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, top); g.addColorStop(1, bottom);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  function drawStars(alpha, t, maxY = H) {
+    ctx.fillStyle = '#fff';
+    for (const s of stars) {
+      if (s.y > maxY) continue;
+      ctx.globalAlpha = alpha * (.45 + .55 * Math.sin(t * s.sp + s.ph) ** 2);
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawMoon(x, y, r, glow = 1, alpha = 1) {
+    if (r <= 0) return;
+    ctx.save(); ctx.globalAlpha = alpha;
+    const h = ctx.createRadialGradient(x, y, r * .8, x, y, r * 3.2);
+    h.addColorStop(0, `rgba(200,215,255,${.32 * glow})`); h.addColorStop(1, 'rgba(200,215,255,0)');
+    ctx.fillStyle = h; ctx.beginPath(); ctx.arc(x, y, r * 3.2, 0, 7); ctx.fill();
+    const b = ctx.createRadialGradient(x - r * .35, y - r * .35, r * .1, x, y, r);
+    b.addColorStop(0, '#fbf8ee'); b.addColorStop(1, '#a8a594');
+    ctx.fillStyle = b; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(110,108,96,.32)';
+    for (const [cx, cy, cr] of craters) { ctx.beginPath(); ctx.arc(x + cx * r, y + cy * r, cr * r, 0, 7); ctx.fill(); }
+    ctx.restore();
+  }
+  function hills(color, base = 560) {
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x += 6) ctx.lineTo(x, base - 34 * Math.sin(x / 70) - 18 * Math.sin(x / 23 + 1));
+    ctx.lineTo(W, H); ctx.fill();
+  }
+  function house(x, y, light) {
+    ctx.fillStyle = '#020308';
+    ctx.fillRect(x, y, 46, 34);
+    ctx.beginPath(); ctx.moveTo(x - 6, y); ctx.lineTo(x + 23, y - 22); ctx.lineTo(x + 52, y); ctx.fill();
+    const g = ctx.createRadialGradient(x + 23, y + 16, 2, x + 23, y + 16, 60);
+    g.addColorStop(0, `rgba(255,190,90,${.45 * light})`); g.addColorStop(1, 'rgba(255,190,90,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x + 23, y + 16, 60, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(255,200,110,${light})`; ctx.fillRect(x + 17, y + 10, 12, 12);
+  }
+  function earth(x, y, r, t, tiltDeg, tint) {
+    const halo = ctx.createRadialGradient(x, y, r, x, y, r * 1.35);
+    halo.addColorStop(0, 'rgba(110,170,255,.45)'); halo.addColorStop(1, 'rgba(110,170,255,0)');
+    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x, y, r * 1.35, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(x, y); ctx.rotate(tiltDeg * Math.PI / 180);
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.clip();
+    const o = ctx.createRadialGradient(-r * .4, -r * .4, r * .1, 0, 0, r);
+    o.addColorStop(0, '#3f8cff'); o.addColorStop(1, '#0b2a6b');
+    ctx.fillStyle = o; ctx.fillRect(-r, -r, r * 2, r * 2);
+    ctx.fillStyle = '#3fa66b';
+    const shift = (t * 22) % (r * 4);
+    for (let k = -1; k <= 1; k++) {
+      const ox = k * r * 4 + shift - r * 2;
+      blob(ox - r * .3, -r * .25, r * .55, r * .38);
+      blob(ox + r * .6, r * .2, r * .4, r * .55);
+      blob(ox + r * 1.5, -r * .4, r * .6, r * .3);
+      blob(ox - r * 1.2, r * .35, r * .35, r * .25);
+    }
+    ctx.fillStyle = 'rgba(240,248,255,.9)';
+    ctx.fillRect(-r, -r, r * 2, r * .16); ctx.fillRect(-r, r * .86, r * 2, r * .16);
+    if (tint) { ctx.fillStyle = tint; ctx.fillRect(-r, -r, r * 2, r * 2); }
+    const sh = ctx.createLinearGradient(-r, 0, r, 0);
+    sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,10,.6)');
+    ctx.fillStyle = sh; ctx.fillRect(-r, -r, r * 2, r * 2);
+    ctx.restore();
+    ctx.save(); ctx.translate(x, y); ctx.rotate(tiltDeg * Math.PI / 180);
+    ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(0, -r * 1.45); ctx.lineTo(0, r * 1.45); ctx.stroke();
+    ctx.restore();
+  }
+  function blob(x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, .4, 0, 7); ctx.fill(); }
+  function waves(level, t, colors) {
+    colors.forEach((c, i) => {
+      ctx.fillStyle = c;
+      ctx.beginPath(); ctx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 4) {
+        const y = level + i * 26 + 7 * Math.sin(x / 38 + t * (1.6 + i * .4) + i) + 4 * Math.sin(x / 13 - t * 2.2);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, H); ctx.fill();
+    });
+  }
+  function turtle(x, y, a, t, ph) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a + Math.PI / 2);
+    const f = Math.sin(t * 9 + ph) * .5;
+    ctx.fillStyle = '#5b6b4a';
+    ctx.save(); ctx.rotate(f); ctx.fillRect(-11, -4, 7, 3); ctx.restore();
+    ctx.save(); ctx.rotate(-f); ctx.fillRect(4, -4, 7, 3); ctx.restore();
+    ctx.fillRect(-8, 4, 4, 3); ctx.fillRect(4, 4, 4, 3);
+    ctx.beginPath(); ctx.arc(0, -9, 3, 0, 7); ctx.fill();
+    ctx.fillStyle = '#3e4a33'; ctx.beginPath(); ctx.ellipse(0, 0, 6.5, 8, 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+  function label(text, x, y, size, color, align = 'center') {
+    ctx.font = `800 ${size}px Unbounded, "Arial Black", sans-serif`;
+    ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, y);
+  }
+
+  // ---------- scene ----------
+  // *cuvânt* = evidențiat portocaliu, _cuvânt_ = culoarea Lunii
+  const scenes = [
+    { d: 5.5, big: true, eye: 'Experiment mental',
+      cap: 'Ce-ar fi dacă _Luna_ ar *dispărea* mâine?',
+      draw(t, p) {
+        sky('#0b1026', '#1d2a5c'); drawStars(.8, t);
+        drawMoon(180, 250 - 25 * easeOut(p), 62 + 10 * easeOut(p), 1);
+        hills('#070a18', 590); hills('#03050c', 625);
+      } },
+    { d: 6, eye: 'Ora 00:00:00',
+      cap: 'Într-o singură clipă, Luna *dispare*.',
+      draw(t, p) {
+        const k = seg(t, 2.6, 3.2);
+        sky(mix('#0b1026', '#04050c', seg(t, 2.6, 5)), mix('#1d2a5c', '#090c1c', seg(t, 2.6, 5)));
+        drawStars(.8 + .2 * k, t);
+        const flick = t > 1.4 && t < 2.6 ? .55 + .45 * Math.abs(Math.sin(t * 23)) : 1;
+        drawMoon(180, 225, 72 * (1 - easeIn(k)), flick, t < 3.2 ? 1 : 0);
+        if (t > 2.6) {
+          const q = seg(t, 3.0, 5.5);
+          const f = seg(t, 3.0, 3.6);
+          ctx.fillStyle = `rgba(255,255,255,${(1 - f) * .9 * (t > 3 ? 1 : 0)})`;
+          ctx.beginPath(); ctx.arc(180, 225, 10 + 260 * easeOut(f), 0, 7); ctx.fill();
+          ctx.fillStyle = '#e9e4cf';
+          for (const b of burst) {
+            ctx.globalAlpha = (1 - q) * (t > 3 ? 1 : 0);
+            ctx.beginPath(); ctx.arc(180 + Math.cos(b.a) * b.v * easeOut(q), 225 + Math.sin(b.a) * b.v * easeOut(q), b.r, 0, 7); ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+        hills('#060815', 590); hills('#020309', 625);
+      } },
+    { d: 6.5, eye: 'Lună plină ≈ 0,25 lux · fără Lună ≈ 0,002 lux',
+      cap: 'Nopțile ar fi de *100 de ori* mai întunecate.',
+      draw(t, p) {
+        const k = easeInOut(seg(t, .3, 4));
+        sky(mix('#22336b', '#010207', k), mix('#41558f', '#04050b', k));
+        drawStars(.25 + .75 * k, t);
+        hills(mix('#18244a', '#020308', k), 560);
+        house(230, 506, .5 + .5 * k);
+        // copac
+        ctx.fillStyle = mix('#0e1733', '#010205', k);
+        ctx.fillRect(86, 470, 6, 70);
+        ctx.beginPath(); ctx.arc(89, 462, 26, 0, 7); ctx.fill();
+        hills('#010205', 640);
+      } },
+    { d: 6.5, eye: 'Soarele rămâne singur să tragă de oceane',
+      cap: 'Mareele ar scădea cu aproape *două treimi*.',
+      draw(t, p) {
+        sky('#03050f', '#0d1530'); drawStars(.7, t, 330);
+        const amp = lerp(70, 24, easeInOut(seg(t, 1, 5)));
+        const level = 380 - amp * Math.sin(t * 1.4);
+        waves(level, t, ['#0f2b5a', '#0b2149', '#071736']);
+        // indicator de maree
+        const gx = 300, gy = 120, gh = 220;
+        ctx.fillStyle = 'rgba(5,6,13,.55)'; ctx.fillRect(gx - 4, gy - 4, 36, gh + 8);
+        const pct = amp / 70;
+        ctx.fillStyle = pct > .6 ? '#9fb4ff' : '#ff8a3d';
+        ctx.fillRect(gx, gy + gh * (1 - pct), 28, gh * pct);
+        label(Math.round(pct * 100) + '%', gx + 14, gy - 20, 14, '#f3f1ea');
+        label('MAREE', gx + 14, gy + gh + 22, 9, '#8a90ad');
+      } },
+    { d: 7, eye: 'Puii de țestoasă caută lumina Lunii pe apă',
+      cap: 'Mii de animale s-ar *rătăci* în întuneric.',
+      draw(t, p) {
+        sky('#010207', '#070b18'); drawStars(.9, t, 320);
+        // lumini de oraș la orizont
+        for (let i = 0; i < 5; i++) {
+          const gx = 20 + i * 24, g = ctx.createRadialGradient(gx, 330, 1, gx, 330, 40);
+          g.addColorStop(0, 'rgba(255,150,60,.5)'); g.addColorStop(1, 'rgba(255,150,60,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, 330, 40, 0, 7); ctx.fill();
+        }
+        ctx.fillStyle = '#061226'; ctx.fillRect(0, 330, W, 110);
+        waves(420, t, ['#081a36']);
+        ctx.fillStyle = '#1e1a12'; ctx.beginPath(); ctx.moveTo(0, 470);
+        for (let x = 0; x <= W; x += 8) ctx.lineTo(x, 462 + 5 * Math.sin(x / 40 + t));
+        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+        // Luna lipsă: contur punctat
+        ctx.strokeStyle = 'rgba(233,228,207,.35)'; ctx.setLineDash([5, 7]); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(250, 200, 40, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        label('?', 250, 202, 30, 'rgba(233,228,207,.5)');
+        for (const tu of turtles) {
+          const a = tu.a + .8 * Math.sin(t * 1.3 + tu.ph);
+          const d = tu.sp * t;
+          const x = tu.x + Math.cos(tu.a) * d + 6 * Math.sin(t * 2 + tu.ph);
+          const y = tu.y + Math.sin(tu.a) * d * .6;
+          turtle(x, Math.max(480, y), a, t, tu.ph);
+        }
+      } },
+    { d: 7, eye: 'În milioane de ani',
+      cap: 'Axa Pământului s-ar putea *clătina haotic*. Anotimpuri extreme.',
+      draw(t, p) {
+        sky('#020309', '#060a1c'); drawStars(.8, t);
+        const wob = Math.sin(t * 2.6) * (2 + 30 * easeInOut(p));
+        const tilt = 23.4 + wob;
+        const heat = clamp(wob / 30, -1, 1);
+        const tint = heat > 0 ? `rgba(255,110,40,${heat * .45})` : `rgba(210,235,255,${-heat * .55})`;
+        earth(180, 280, 92, t, tilt, tint);
+        label('Înclinare: ' + tilt.toFixed(1).replace('.', ',') + '°', 180, 430, 15, heat > .3 ? '#ff8a3d' : heat < -.3 ? '#cfe3ff' : '#f3f1ea');
+      } },
+    { d: 6, eye: 'Eclipsă totală de Soare: anulată',
+      cap: 'Eclipsele totale ar dispărea *pentru totdeauna*.',
+      draw(t, p) {
+        sky('#2a0f2e', '#ff8a3d');
+        ctx.save(); ctx.translate(180, 280); ctx.rotate(t * .25);
+        for (let i = 0; i < 16; i++) {
+          ctx.rotate(Math.PI / 8);
+          ctx.fillStyle = 'rgba(255,230,160,.10)';
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-18, -360); ctx.lineTo(18, -360); ctx.fill();
+        }
+        ctx.restore();
+        const g = ctx.createRadialGradient(180, 280, 20, 180, 280, 130);
+        g.addColorStop(0, 'rgba(255,240,200,1)'); g.addColorStop(.45, 'rgba(255,200,110,.9)'); g.addColorStop(1, 'rgba(255,160,60,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(180, 280, 130, 0, 7); ctx.fill();
+        // umbra care trebuia să acopere Soarele trece... și nu e nimic acolo
+        const mx = lerp(-60, 420, easeInOut(p));
+        ctx.strokeStyle = 'rgba(40,10,30,.5)'; ctx.setLineDash([5, 7]); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(mx, 280, 56, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        hills('#1a0a1c', 600);
+      } },
+    { d: 7.5, eye: 'Din fericire',
+      cap: 'Luna e aici. Se îndepărtează doar *3,8 cm pe an*. Mai avem _miliarde de ani_.',
+      draw(t, p) {
+        sky('#0b1026', '#1d2a5c'); drawStars(.7, t);
+        const k = easeBack(seg(t, .2, 1.6));
+        drawMoon(180, lerp(-120, 240, k), 70, 1 + .3 * Math.sin(t * 2));
+        // riglă: 3,8 cm
+        const r = seg(t, 2, 3.2);
+        if (r > 0) {
+          ctx.globalAlpha = r;
+          ctx.strokeStyle = '#e9e4cf'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(110, 360); ctx.lineTo(110 + 140 * easeOut(r), 360); ctx.stroke();
+          for (let i = 0; i <= 10; i++) { const x = 110 + i * 14; if (x <= 110 + 140 * easeOut(r)) { ctx.beginPath(); ctx.moveTo(x, 360); ctx.lineTo(x, i % 5 ? 354 : 348); ctx.stroke(); } }
+          label('3,8 cm / an', 180, 384, 12, '#e9e4cf');
+          ctx.globalAlpha = 1;
+        }
+        hills('#070a18', 590); hills('#03050c', 625);
+      } }
+  ];
+  let acc = 0;
+  for (const s of scenes) { s.start = acc; acc += s.d; }
+  const TOTAL = acc;
+
+  barsEl.innerHTML = scenes.map(() => '<span><i></i></span>').join('');
+  const fills = [...barsEl.querySelectorAll('i')];
+
+  function words(text) {
+    return text.split(' ').map((w, i) => {
+      let cls = 'w';
+      if (/^\*.*\*[.,?!]?$/.test(w) || w.startsWith('*') || w.endsWith('*') || /\*[.,?!]$/.test(w)) cls += ' hl';
+      if (w.startsWith('_') || /_[.,?!]?$/.test(w)) cls += ' ok';
+      const clean = w.replace(/[*_]/g, '');
+      return `<span class="${cls}" style="animation-delay:${(i * .09 + .15).toFixed(2)}s">${clean}</span>`;
+    }).join(' ');
+  }
+  // marchează și cuvintele din interiorul unui *grup de mai multe cuvinte*
+  function markup(text) {
+    return text.replace(/\*([^*]+)\*/g, (_, g) => g.split(' ').map(w => `*${w}*`).join(' '))
+               .replace(/_([^_]+)_/g, (_, g) => g.split(' ').map(w => `_${w}_`).join(' '));
+  }
+  let cur = -1;
+  function setScene(i) {
+    cur = i;
+    const s = scenes[i];
+    capEl.className = 'caption' + (s.big ? ' big' : '');
+    capEl.innerHTML = words(markup(s.cap));
+    eyeEl.innerHTML = s.eye.split(' ').map((w, j) => `<span class="w" style="animation-delay:${(j * .05).toFixed(2)}s">${w}</span>`).join(' ');
+    if (i > 0 && playing) whoosh();
+  }
+
+  // ---------- redare ----------
+  let t = 0, playing = false, last = 0, scale = 1, dpr = 1;
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    scale = cv.width / W;
+    render();
+  }
+  function render() {
+    let i = scenes.findIndex(s => t < s.start + s.d);
+    if (i < 0) i = scenes.length - 1;
+    if (i !== cur) setScene(i);
+    const s = scenes[i], local = t - s.start;
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    s.draw(local, clamp(local / s.d));
+    const fin = i > 0 ? 1 - local / .35 : 0;
+    const fout = i < scenes.length - 1 ? 1 - (s.d - local) / .35 : 0;
+    const a = clamp(Math.max(fin, fout));
+    if (a > 0) { ctx.fillStyle = `rgba(0,0,0,${a})`; ctx.fillRect(0, 0, W, H); }
+    fills.forEach((f, j) => {
+      const sj = scenes[j];
+      f.style.width = (clamp((t - sj.start) / sj.d) * 100) + '%';
+    });
+  }
+  function loop(now) {
+    if (playing) {
+      t += Math.min(.1, (now - last) / 1000);
+      if (t >= TOTAL) { t = TOTAL - .001; pause(); document.getElementById('end').hidden = false; }
+    }
+    last = now;
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- sunet (WebAudio, pornește doar după atingere) ----------
+  let ac = null, master = null, muted = false;
+  function initAudio() {
+    if (ac) return;
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      master = ac.createGain(); master.gain.value = muted ? 0 : .7; master.connect(ac.destination);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.connect(master);
+      [55, 82.4, 110.6, 164.8].forEach((fr, i) => {
+        const o = ac.createOscillator(); o.type = i % 2 ? 'sine' : 'triangle'; o.frequency.value = fr;
+        const g = ac.createGain(); g.gain.value = .045;
+        const l = ac.createOscillator(); l.frequency.value = .07 + i * .05;
+        const lg = ac.createGain(); lg.gain.value = .03; l.connect(lg); lg.connect(g.gain);
+        o.connect(g); g.connect(lp); o.start(); l.start();
+      });
+    } catch (e) { ac = null; }
+  }
+  function whoosh() {
+    if (!ac) return;
+    const len = ac.sampleRate * .9, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
+    bp.frequency.setValueAtTime(300, ac.currentTime); bp.frequency.exponentialRampToValueAtTime(2400, ac.currentTime + .8);
+    const g = ac.createGain(); g.gain.setValueAtTime(0, ac.currentTime);
+    g.gain.linearRampToValueAtTime(.25, ac.currentTime + .15); g.gain.linearRampToValueAtTime(0, ac.currentTime + .9);
+    src.connect(bp); bp.connect(g); g.connect(master); src.start();
+  }
+
+  let wake = null;
+  async function keepAwake() { try { wake = await navigator.wakeLock?.request('screen'); } catch (e) { wake = null; } }
+
+  function play() {
+    initAudio(); ac?.resume?.();
+    playing = true;
+    document.getElementById('start').hidden = true;
+    document.getElementById('end').hidden = true;
+    document.getElementById('paused').hidden = true;
+    keepAwake();
+  }
+  function pause() {
+    playing = false; ac?.suspend?.();
+    try { wake?.release(); } catch (e) {}
+  }
+  function restart() { t = 0; cur = -1; play(); }
+
+  stage.addEventListener('click', e => {
+    if (e.target.closest('button')) return;
+    if (!document.getElementById('start').hidden || !document.getElementById('end').hidden) return;
+    if (playing) { pause(); document.getElementById('paused').hidden = false; }
+    else play();
+  });
+  document.getElementById('playBtn').addEventListener('click', play);
+  document.getElementById('replay').addEventListener('click', restart);
+  document.getElementById('restart').addEventListener('click', restart);
+  document.getElementById('sound').addEventListener('click', () => {
+    muted = !muted;
+    if (master) master.gain.value = muted ? 0 : .7;
+    document.getElementById('sound').style.opacity = muted ? .45 : 1;
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && playing) { pause(); document.getElementById('paused').hidden = false; } });
+
+  new ResizeObserver(resize).observe(stage);
+  document.fonts?.ready.then(render);
+  resize();
+  requestAnimationFrame(n => { last = n; loop(n); });
+})();
+</script>
