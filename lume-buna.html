@@ -649,7 +649,7 @@
     if (inVo) for (const [st, txt] of S[i].cues) if (lt >= st - .05) cap = txt;
     if (cap !== curCap) { curCap = cap; capEl.innerHTML = cap ? `<span>${words(cap)}</span>` : ''; }
     let st = null;
-    for (const s of STATS) if (s.i === i && lt >= cueT(i, s.k) && lt < (s.end ? cueT(i, s.end) - .1 : S[i].len - .25) && inVo) st = s;
+    for (const s of STATS) if (s.i === i && lt >= cueT(i, s.k) && inVo) st = lt < (s.end ? cueT(i, s.end) - .1 : S[i].len - .25) ? s : null;
     if (st !== curStat) {
       curStat = st;
       if (st) {
