@@ -223,11 +223,19 @@
   const mixC = (out, a, b, u) => out.copy(a).lerp(b, u);
   const tri = (out, a, b, c, u) => u < .5 ? mixC(out, a, b, u * 2) : mixC(out, b, c, u * 2 - 1);
 
+  // Texturile cu text se redesenează după ce se încarcă fonturile
+  const canvases = [];
   function canvasTex(w, h, draw) {
     const c = document.createElement('canvas'); c.width = w; c.height = h;
     draw(c.getContext('2d'), w, h);
-    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; canvases.push({ c, draw, t }); return t;
   }
+  const fontsReady = Promise.race([
+    Promise.all(['800 70px Montserrat', '900 60px Montserrat'].map(f => document.fonts.load(f))),
+    new Promise(r => setTimeout(r, 4000))
+  ]).catch(() => {}).then(() => canvases.forEach(({ c, draw, t }) => {
+    const x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height); draw(x, c.width, c.height); t.needsUpdate = true;
+  }));
   const glowTex = canvasTex(128, 128, (x, w) => {
     const g = x.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
     g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
