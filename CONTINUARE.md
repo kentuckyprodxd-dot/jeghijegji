@@ -3,7 +3,7 @@
 Toate videourile de până acum sunt în rădăcina repo-ului (`*.html`, `*.mp4`, `*-descriere.md`, `*-audio/`). Ultimul: `luna-cade` („Ce-ar fi dacă Luna ar cădea pe Pământ?"), primul în stil realist.
 
 ## Ce vrea autorul
-- Idei noi „ce-ar fi dacă…", în română, care să prindă pe TikTok/Reels/Shorts. Nu repeta temele: apocalipsa zombi, fără Soare, gaura neagră, gaura prin Pământ, internet 30 de zile, lumea fără oameni, Pământul se oprește, Luna cade, lumea bună, lumea rea 50 de zile, gravitația dispare 5 secunde.
+- Idei noi „ce-ar fi dacă…", în română, care să prindă pe TikTok/Reels/Shorts. Nu repeta temele: apocalipsa zombi, fără Soare, gaura neagră, gaura prin Pământ, internet 30 de zile, lumea fără oameni, Pământul se oprește, Luna cade, lumea bună, lumea rea 50 de zile, gravitația dispare 5 secunde, timpul se oprește.
 - **Stil realist** (nu cartoon cu contur): lumini și umbre naturale, ceață, cer, materiale.
 - **Cameră fixă în orașe/străzi** (trepied, fără dolly și fără tremur „de mână”): autorul a văzut orice mișcare a camerei ca pe o „stradă care se mișcă / se glitchuiește”. Se mișcă doar obiectele. Traficul trebuie să fie o buclă lungă, cu capetele în afara cadrului (mașinile nu au voie să apară/dispară în cadru), iar pe aceeași bandă toate mașinile au aceeași viteză.
 - **Repede**: ~1 oră de la cerere până la MP4 (vezi setările de randare de mai jos), nu 3 ore.

@@ -1,0 +1,6 @@
+{
+ "freeze": ["Time stopping effect: a deep reversed whoosh that sucks all sound away into sudden total silence, cinematic", 3, false],
+ "heart":  ["Slow heavy human heartbeat, muffled and close, tense cinematic", 10, false],
+ "shimmer":["Eerie frozen time ambience, very quiet high glassy shimmer and soft low drone, still and suspended, cinematic", 12, false],
+ "dark":   ["Deep sub bass drone slowly fading into darkness, ominous, cinematic, no melody", 8, false]
+}
