@@ -501,7 +501,7 @@
   const CUES = [];
   {
     const X = (at, name, gain, o = {}) => CUES.push({ at: Math.max(0, at), name, gain, fadeIn: o.fi ?? .08, fadeOut: o.fo ?? .6, dur: o.dur ?? null, offset: o.off ?? 0 });
-    X(0, 'space', .42, { fi: 1, dur: 19.6, fo: 1 }); X(19, 'space', .38, { fi: 1, dur: S[3].start - 19 + .2, fo: .3 });
+    X(0, 'space', .42, { fi: 1, dur: S[3].start + .2, fo: .3 });
     X(T_MORPH0 - .2, 'morph', .55, { fi: .2, fo: 1 });
     X(S[3].start - .25, 'whoosh', .3, { fo: .4 });
     X(S[3].start, 'wind', .42, { fi: .3, dur: S[4].start - S[3].start + .1, fo: .3 });
