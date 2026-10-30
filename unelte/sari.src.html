@@ -1,0 +1,643 @@
+<meta charset="utf-8">
+<title>Toți sar deodată</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@800;900&family=JetBrains+Mono:wght@700;800&display=swap">
+<style>
+  /* Cadru vertical 9:16, stil motion design: 3D dedesubt, grafică 2D animată din JS deasupra */
+  :root {
+    --bg: #07060d;
+    --ink: #fff8ec;
+    --gold: #ffd23f;
+    --hot: #ff6b2c;
+    --cyan: #5ce1ff;
+    --muted: rgba(255, 248, 236, .72);
+    --f-slam: "Anton", "Impact", "Arial Narrow", sans-serif;
+    --f-cap: "Montserrat", "Arial Black", system-ui, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--f-cap);
+    display: grid; place-items: center;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px; box-sizing: border-box; overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage {
+    position: relative;
+    width: min(100%, calc((100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 9 / 16));
+    aspect-ratio: 9 / 16; max-width: 100%;
+    border-radius: 16px; overflow: hidden; background: #000;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+    user-select: none; -webkit-user-select: none; container-type: inline-size;
+  }
+  canvas#gl { position: absolute; inset: -3%; width: 106%; height: 106%; display: block; will-change: transform, filter; }
+  body.render { padding: 0; display: block; }
+  body.render .stage { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+  .grain { position: absolute; inset: 0; z-index: 6; pointer-events: none; opacity: .09; mix-blend-mode: overlay; background-size: 256px 256px; }
+  .vig { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: radial-gradient(120% 80% at 50% 48%, transparent 58%, rgba(0, 0, 0, .55) 100%), linear-gradient(to top, rgba(0, 0, 0, .5), transparent 30%); }
+  .flash { position: absolute; inset: 0; z-index: 7; background: #fff; opacity: 0; pointer-events: none; }
+  .fade { position: absolute; inset: 0; z-index: 7; background: #000; opacity: 0; pointer-events: none; }
+
+  .hud { position: absolute; left: 5%; top: 3.6%; z-index: 5; font-family: var(--f-mono); text-shadow: 0 2px 10px rgba(0, 0, 0, .7); opacity: 0; }
+  .hud .t { font-size: 7.6cqw; font-weight: 800; letter-spacing: .02em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .hud .t small { font-size: .5em; color: var(--gold); margin-right: .25em; vertical-align: .35em; }
+  .hud .row { margin-top: 1.4cqw; font-size: 3.1cqw; font-weight: 700; color: var(--muted); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+  .hud .row b { color: var(--ink); font-weight: 800; }
+
+  .ruler { position: absolute; left: 4.2%; top: 25%; height: 46%; width: 2.6cqw; z-index: 5; opacity: 0; }
+  .ruler .bar { position: absolute; inset: 0; border-radius: 99px; overflow: hidden; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .55), 0 4px 18px rgba(0, 0, 0, .5);
+    background: linear-gradient(to bottom, #6b4a2e 0 .4%, #c4371f .4%, #ff6a2a 22.6%, #ff9f1f 22.7%, #ffc94a 40.4%, #fff3b8 40.5%, #fff3b8 59.5%, #ffc94a 59.6%, #ff9f1f 77.3%, #ff6a2a 77.4%, #c4371f 99.6%, #1c6fb8 99.6%); }
+  .ruler .dot { position: absolute; left: 50%; width: 4.4cqw; height: 4.4cqw; margin: -2.2cqw 0 0 -2.2cqw; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1cqw rgba(255, 255, 255, .25), 0 0 4cqw rgba(255, 255, 255, .8); }
+  .ruler .lbl { position: absolute; left: 4.4cqw; font: 800 2.5cqw/1 var(--f-mono); letter-spacing: .08em; color: var(--muted); white-space: nowrap; transform: translateY(-50%); text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
+
+  .title { position: absolute; left: 6%; right: 6%; top: 15%; z-index: 4; text-align: center; font: 400 13.5cqw/.95 var(--f-slam); text-transform: uppercase; letter-spacing: .01em;
+    text-shadow: .04em .04em 0 #000, 0 0 40px rgba(0, 0, 0, .6); opacity: 0; }
+  .title em { font-style: normal; color: var(--gold); }
+
+  .slam { position: absolute; left: 4%; right: 4%; top: 31%; z-index: 4; text-align: center; opacity: 0; pointer-events: none; }
+  .slam .big { font: 400 21cqw/.9 var(--f-slam); letter-spacing: .005em; white-space: nowrap; color: var(--ink);
+    text-shadow: -.035em 0 0 rgba(255, 40, 80, .85), .035em 0 0 rgba(40, 220, 255, .85), .05em .06em 0 #000; }
+  .slam .sub { margin-top: 2.6cqw; display: inline-block; padding: 1.4cqw 3cqw; background: var(--gold); color: #120d02; font: 900 3.7cqw/1.15 var(--f-cap); text-transform: uppercase; letter-spacing: .03em; transform: rotate(-2deg); box-shadow: .6cqw .6cqw 0 #000; }
+  .slam.hot .big { color: var(--hot); } .slam.cyan .big { color: var(--cyan); } .slam.gold .big { color: var(--gold); }
+
+  .cap { position: absolute; left: 5%; right: 5%; bottom: 13%; z-index: 4; text-align: center; font: 900 8.6cqw/1.08 var(--f-cap); text-transform: uppercase; letter-spacing: -.01em;
+    -webkit-text-stroke: .3cqw #000; paint-order: stroke fill; text-shadow: 0 .6cqw 0 #000, 0 0 30px rgba(0, 0, 0, .55); }
+  .cap span { display: inline-block; }
+  .cap .hl { color: var(--gold); }
+
+  .snd { position: absolute; top: 3.6%; right: 5%; z-index: 9; width: 9.5cqw; height: 9.5cqw; min-width: 34px; min-height: 34px; border: 0; border-radius: 50%; padding: 0;
+    background: rgba(0, 0, 0, .42); color: var(--ink); display: grid; place-items: center; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .snd svg { width: 52%; height: 52%; fill: currentColor; }
+  .snd:focus-visible, .play:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .overlay { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5cqw; text-align: center; padding: 0 8%; cursor: pointer;
+    background: radial-gradient(circle at 50% 52%, rgba(7, 6, 13, .1), rgba(7, 6, 13, .8)); }
+  .overlay h1 { margin: 0; font: 400 15cqw/.92 var(--f-slam); text-transform: uppercase; text-shadow: .04em .04em 0 #000; }
+  .overlay h1 em { font-style: normal; color: var(--gold); }
+  .overlay p { margin: 0; font: 800 3.4cqw/1.4 var(--f-cap); color: var(--muted); }
+  .play { width: 21cqw; height: 21cqw; border-radius: 50%; border: 0; padding: 0; background: var(--gold); color: #120d02; display: grid; place-items: center; cursor: pointer; box-shadow: .8cqw .8cqw 0 #000; }
+  .play svg { width: 40%; height: 40%; fill: currentColor; margin-left: 8%; }
+  .play.busy { opacity: .5; } .play.again svg { margin-left: 0; }
+  .overlay.paused { background: rgba(7, 6, 13, .35); }
+  .sources { font: 800 2.6cqw/1.5 var(--f-cap); color: var(--muted); max-width: 92%; text-transform: none; }
+</style>
+<div class="stage" id="stage">
+  <canvas id="gl"></canvas>
+  <div class="vig"></div>
+  <div class="hud" id="hud">
+    <div class="row" id="hL"></div>
+    <div class="t" id="hVal"></div>
+  </div>
+  <div class="title" id="title">Ce-ar fi dacă <em>toți oamenii</em> ar sări deodată?</div>
+  <div class="slam" id="slam"><div class="big" id="slamBig"></div><div class="sub" id="slamSub"></div></div>
+  <div class="cap" id="cap"></div>
+  <div class="grain" id="grain"></div>
+  <div class="flash" id="flash"></div>
+  <div class="fade" id="fade"></div>
+
+  <button class="snd" id="snd" aria-label="Oprește sunetul" hidden>
+    <svg viewBox="0 0 24 24" id="sndOn"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+    <svg viewBox="0 0 24 24" id="sndOff" hidden><path d="M16.5 12A4.5 4.5 0 0 0 14 8v2.2l2.45 2.45c.03-.2.05-.42.05-.65zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.8 8.8 0 0 0 21 12a9 9 0 0 0-7-8.8v2.1A7 7 0 0 1 19 12zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.1a9 9 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/></svg>
+  </button>
+  <div class="overlay" id="start">
+    <h1><em>Toți</em> sar deodată</h1>
+    <button class="play busy" id="playBtn" aria-label="Pornește videoul"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+    <p id="startHint">Se încarcă…</p>
+  </div>
+  <div class="overlay paused" id="paused" hidden>
+    <button class="play" aria-label="Continuă"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+  </div>
+  <div class="overlay" id="end" hidden>
+    <h1>Tu ai <em>sări</em>?</h1>
+    <button class="play again" id="againBtn" aria-label="Vezi din nou"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg></button>
+    <div class="sources">Peste 8 miliarde de oameni (ONU, 2024). La 2 oameni pe m², am încăpea pe ~4.000 km² (județul Prahova are ~4.700 km²). Masa tuturor oamenilor e de ~10 miliarde de ori mai mică decât a Pământului, așa că o săritură îl mișcă mai puțin decât lățimea unui atom. Aeroportul Henri Coandă: ~15 milioane de pasageri pe an. Voce și efecte sonore: ElevenLabs.</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const TIMING = /*TIMING*/[];
+  const AUDIO = /*AUDIO*/[];
+  const SFX = /*SFX*/{};   // efecte sonore și muzică generate cu ElevenLabs (sound-generation)
+  const LAND = /*MOON*/'';   // masca uscatului pentru glob
+
+  const RENDER = /[?&]render\b/.test(location.search);
+  if (RENDER) document.body.classList.add('render');
+  let seed = 8100;
+  const rand = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+  // ---------- Three.js ----------
+  const stage = document.getElementById('stage'), cvs = document.getElementById('gl');
+  const renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: true, preserveDrawingBuffer: RENDER, powerPreference: 'high-performance' });
+  const PR = RENDER ? (window.devicePixelRatio || 2) : Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(PR);
+  const camera = new THREE.PerspectiveCamera(55, 9 / 16, .05, 2500);
+  function resize() { const r = cvs.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage); resize();
+  const C3 = h => new THREE.Color(h);
+
+  const canvases = [];
+  function canvasTex(w, h, draw) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; canvases.push({ c, draw, t }); return t;
+  }
+  const fontsReady = Promise.race([Promise.all(['400 60px Anton', '900 60px Montserrat', '800 40px "JetBrains Mono"'].map(f => document.fonts.load(f))), new Promise(r => setTimeout(r, 4000))])
+    .catch(() => {}).then(() => canvases.forEach(({ c, draw, t }) => { const x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height); draw(x, c.width, c.height); t.needsUpdate = true; }));
+  const glowTex = canvasTex(128, 128, (x, w) => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.3, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, w); });
+  const puffTex = canvasTex(128, 128, (x, w) => { for (let k = 0; k < 9; k++) { const px = 34 + rand() * 60, py = 34 + rand() * 60, r = 22 + rand() * 26, g = x.createRadialGradient(px, py, 0, px, py, r);
+    g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, w); } });
+  const glow = (c, s, o = 1) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: c, transparent: true, opacity: o, depthWrite: false, blending: THREE.AdditiveBlending })); m.scale.setScalar(s); return m; };
+  const tagTex = (txt, bg = '#ffd23f', fg = '#120d02') => canvasTex(512, 128, (x, w, h) => {
+    x.font = '900 58px Montserrat, Arial Black, sans-serif'; const tw = Math.min(w - 24, x.measureText(txt).width + 52);
+    x.fillStyle = '#000'; x.fillRect((w - tw) / 2 + 8, 22, tw, 88); x.fillStyle = bg; x.fillRect((w - tw) / 2, 14, tw, 88);
+    x.fillStyle = fg; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, w / 2, 60, w - 50);
+  });
+  const tag = (txt, sx, bg, fg) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex(txt, bg, fg), transparent: true, depthTest: false })); s.scale.set(sx, sx / 4, 1); s.renderOrder = 10; return s; };
+  // umbrire „cel": 3 trepte, contur negru
+  const toonRamp = (() => { const d = new Uint8Array([90, 90, 90, 255, 180, 180, 180, 255, 255, 255, 255, 255]); const t = new THREE.DataTexture(d, 3, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
+  const toon = (c, o = {}) => new THREE.MeshToonMaterial({ color: c, gradientMap: toonRamp, ...o });
+  const OUTLINE = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide });
+  const withOutline = (mesh, w = 1.07) => { const o = new THREE.Mesh(mesh.geometry, OUTLINE); o.scale.setScalar(w); mesh.add(o); return mesh; };
+  const inflate = (g, d) => { const c = g.clone(), p = c.attributes.position, n = c.attributes.normal; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + n.getX(i) * d, p.getY(i) + n.getY(i) * d, p.getZ(i) + n.getZ(i) * d); return c; };
+  const merge = gs => { const P = [], N = []; gs.forEach(g => { g = g.index ? g.toNonIndexed() : g; P.push(...g.attributes.position.array); N.push(...g.attributes.normal.array); });
+    const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); m.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); return m; };
+  const COLS = ['#ffd23f', '#ff7aa2', '#5ce1ff', '#ffffff', '#ff8a3d', '#9b8cff', '#7bd389', '#ff3b5c', '#3d7bff'];
+  const SKIN = ['#ffd2a6', '#f1b98a', '#c98b5e', '#8d5a3b', '#ffe0c2'];
+
+  // ---------- Personajul (cartoon, cu contur) ----------
+  function makeGuy(suitC = '#ff7a1a', packC = '#3d7bff', hairC = '#1d1b26') {
+    const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+    const suit = toon(suitC), skin = toon('#ffd2a6'), dark = toon('#1d1b26'), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const torso = withOutline(new THREE.Mesh(new THREE.CylinderGeometry(.27, .23, .7, 16), suit)); torso.position.y = 1.0; body.add(torso);
+    const belt = new THREE.Mesh(new THREE.CylinderGeometry(.235, .235, .07, 16), dark); belt.position.y = .7; body.add(belt);
+    const neck = new THREE.Group(); neck.position.y = 1.36; body.add(neck);
+    const head = withOutline(new THREE.Mesh(new THREE.SphereGeometry(.27, 24, 18), skin), 1.06); head.position.y = .24; neck.add(head);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(.28, 20, 12, 0, Math.PI * 2, 0, 1.25), toon(hairC)); hair.position.y = .27; hair.rotation.x = -.35; neck.add(hair);
+    const eyes = [];
+    for (const s of [-1, 1]) {
+      const e = new THREE.Mesh(new THREE.SphereGeometry(.075, 14, 10), white); e.position.set(s * .1, .3, .23); e.scale.z = .5; neck.add(e);
+      const p = new THREE.Mesh(new THREE.SphereGeometry(.036, 10, 8), dark); p.position.set(s * .1, .3, .27); neck.add(p); eyes.push(p);
+    }
+    const mouth = new THREE.Mesh(new THREE.SphereGeometry(.06, 14, 10), toon('#5a1020')); mouth.position.set(0, .14, .245); mouth.scale.set(1, 1.2, .4); neck.add(mouth);
+    const limb = (x, y, len, r, mat) => { const p = new THREE.Group(); p.position.set(x, y, 0); body.add(p);
+      const m = withOutline(new THREE.Mesh(new THREE.CylinderGeometry(r, r * .85, len, 10).translate(0, -len / 2, 0), mat), 1.12); p.add(m);
+      const end = withOutline(new THREE.Mesh(new THREE.SphereGeometry(r * 1.25, 12, 10), mat === suit ? dark : skin), 1.1); end.position.y = -len; p.add(end); return p; };
+    const armL = limb(-.32, 1.28, .62, .085, suit), armR = limb(.32, 1.28, .62, .085, suit);
+    const legL = limb(-.12, .68, .7, .1, suit), legR = limb(.12, .68, .7, .1, suit);
+    const pack = withOutline(new THREE.Mesh(new THREE.BoxGeometry(.38, .42, .16), toon(packC)), 1.08); pack.position.set(0, 1.05, -.28); body.add(pack);
+    return { root, body, neck, armL, armR, legL, legR, mouth, eyes };
+  }
+  function poseGuy(G, p, c, k = 1) {
+    const s = Math.sin(c), s2 = Math.sin(c * 1.37 + 1);
+    G.body.rotation.set(0, 0, 0); G.neck.rotation.set(0, 0, 0); G.body.position.set(0, 0, 0);
+    G.armL.rotation.set(0, 0, -.12 + s * .03); G.armR.rotation.set(0, 0, .12 - s * .03); G.legL.rotation.set(0, 0, 0); G.legR.rotation.set(0, 0, 0); G.mouth.scale.set(1, .7, .4);
+    if (p === 'idle') { G.body.position.y = Math.sin(c * 2) * .008; G.neck.rotation.z = s2 * .04; }
+    else if (p === 'crouch') {   // k = cât de jos
+      G.body.position.y = -.2 * k; G.legL.rotation.set(-.55 * k, 0, -.05); G.legR.rotation.set(-.55 * k, 0, .05);
+      G.armL.rotation.set(.9 * k, 0, -.25); G.armR.rotation.set(.9 * k, 0, .25); G.neck.rotation.x = .15 * k; G.mouth.scale.set(1, .5, .4);
+    } else if (p === 'jump') {
+      G.armL.rotation.set(0, 0, -2.7 + s * .1); G.armR.rotation.set(0, 0, 2.7 - s * .1); G.legL.rotation.set(-.9, 0, 0); G.legR.rotation.set(.4, 0, 0); G.mouth.scale.set(1.2, 1.8, .4);
+    } else if (p === 'yay') {
+      G.armL.rotation.set(0, 0, -2.6 + s * .3); G.armR.rotation.set(0, 0, 2.6 - s * .3); G.legL.rotation.set(.3 * s, 0, 0); G.legR.rotation.set(-.3 * s, 0, 0); G.mouth.scale.set(1.3, .9, .4); G.neck.rotation.z = s * .1;
+    } else if (p === 'walk') {
+      G.armL.rotation.set(s * .55, 0, -.1); G.armR.rotation.set(-s * .55, 0, .1); G.legL.rotation.set(-s * .6, 0, 0); G.legR.rotation.set(s * .6, 0, 0); G.body.position.y = Math.abs(Math.cos(c)) * .04;
+    } else if (p === 'shrug') {
+      G.armL.rotation.set(-.2, 0, -1.25 + s * .05); G.armR.rotation.set(-.2, 0, 1.25 - s * .05); G.neck.rotation.z = .16; G.body.position.y = .02 * k; G.mouth.scale.set(1.25, .55, .4);
+    }
+  }
+
+  // ---------- Cronologie ----------
+  const GAP = .3, LEAD = .2, TAIL = 2.4;
+  const S = TIMING.map(s => ({ caps: s.caps, dur: s.dur, len: s.dur + GAP }));
+  let acc = LEAD; S.forEach(s => { s.start = acc; acc += s.len; });
+  const END = S[8].start + S[8].dur, TOTAL = END + TAIL;
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, u) => a + (b - a) * u;
+  const ss = (a, b, v) => { const x = clamp((v - a) / (b - a)); return x * x * (3 - 2 * x); };
+  const eio = u => { u = clamp(u); return u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; };
+  const eout = u => 1 - Math.pow(1 - clamp(u), 3);
+  const back = u => { u = clamp(u); const c = 1.9; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
+  const capT = (i, re) => S[i].start + S[i].caps[Math.max(0, S[i].caps.findIndex(c => re.test(c[1])))][0];
+  const T_JUMP = capT(2, /Sari/), T_LAND = S[3].start + 1.45, T_ATOM = S[3].start + 4.2;
+  const CUTS = [S[2].start, S[3].start, T_ATOM, S[4].start, S[5].start, S[6].start, S[7].start, S[8].start];
+  const viewAt = t => t < S[2].start ? 'globe' : t < T_ATOM ? 'crowd' : t < S[4].start ? 'atom' : t < S[6].start ? 'crowd' : t < S[8].start ? 'airport' : 'crowd';
+  const sph = (r, az, el) => new THREE.Vector3(Math.cos(el) * Math.sin(az) * r, Math.sin(el) * r, Math.cos(el) * Math.cos(az) * r);
+
+  // ---------- GLOBUL: 8 miliarde de oameni se strâng într-un singur loc ----------
+  const SG = new THREE.Scene(); SG.background = C3('#06060c');
+  const starPos = new Float32Array(1600 * 3);
+  for (let i = 0; i < 1600; i++) { const v = new THREE.Vector3(rand() - .5, rand() - .5, rand() - .5).normalize().multiplyScalar(70 + rand() * 50); starPos.set([v.x, v.y, v.z], i * 3); }
+  const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  SG.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4 * PR, sizeAttenuation: false })));
+  const maskTex = new THREE.Texture(); maskTex.minFilter = THREE.LinearFilter;
+  const landImg = new Image();
+  const landReady = new Promise(res => { landImg.onload = () => { maskTex.image = landImg; maskTex.needsUpdate = true; res(); }; landImg.onerror = res; landImg.src = LAND; });
+  const globeMat = new THREE.ShaderMaterial({
+    uniforms: { uMask: { value: maskTex }, uSun: { value: new THREE.Vector3(1, .3, 1) } },
+    vertexShader: `varying vec2 vUv; varying vec3 vWN; varying vec3 vON; varying vec3 vV;
+      void main(){ vUv = uv; vON = normal; vWN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.0);
+        vV = normalize(cameraPosition - w.xyz); gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform sampler2D uMask; uniform vec3 uSun; varying vec2 vUv; varying vec3 vWN; varying vec3 vON; varying vec3 vV;
+      float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      void main(){
+        float m = smoothstep(.35, .65, texture2D(uMask, vUv).r);
+        float al = abs(asin(clamp(vON.y, -1.0, 1.0))) * 57.2958;
+        vec3 ocean = mix(vec3(.08, .36, .78), vec3(.14, .52, .9), .35 + .5 * (1.0 - al / 90.0));
+        vec3 col = mix(ocean, vec3(.42, .76, .3), m);
+        col = mix(col, vec3(.94, .97, 1.0), smoothstep(74.0, 77.0, al));
+        vec3 n = normalize(vWN); float d = dot(n, normalize(uSun));
+        float l = mix(.24, .72, smoothstep(-.12, -.02, d)); l = mix(l, 1.0, smoothstep(.22, .32, d));
+        col *= l;
+        float city = step(.9, h(floor(vUv * vec2(640., 320.)))) * m;
+        col += vec3(1.0, .78, .38) * city * smoothstep(-.02, -.2, d);
+        float f = pow(1.0 - max(dot(n, vV), 0.0), 3.0);
+        col += vec3(.35, .65, 1.0) * f * (.35 + .65 * smoothstep(-.3, .3, d));
+        gl_FragColor = vec4(col, 1.0);
+      }`
+  });
+  const earth = new THREE.Group(); SG.add(earth);
+  earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 96, 48), globeMat));
+  SG.add(new THREE.Mesh(new THREE.SphereGeometry(1.07, 64, 32), new THREE.ShaderMaterial({ side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'varying vec3 vN; void main(){ float i = pow(clamp(.7 - dot(vN, vec3(0., 0., 1.)), 0., 1.), 2.2); gl_FragColor = vec4(vec3(.36, .7, 1.) * i * 1.3, 1.); }' })));
+  const geo = (lat, lon, r = 1) => { const a = lat * Math.PI / 180, b = lon * Math.PI / 180; return new THREE.Vector3(Math.cos(a) * Math.cos(b) * r, Math.sin(a) * r, -Math.cos(a) * Math.sin(b) * r); };
+  const ROU = geo(45.1, 26.0);
+  const ANG_T = Math.atan2(-ROU.x, ROU.z);   // rotația la care România e cu fața spre cameră
+  const pin = new THREE.Group(); earth.add(pin);
+  { const head = withOutline(new THREE.Mesh(new THREE.SphereGeometry(.045, 16, 12), toon('#ff3b5c')), 1.15); head.position.y = .15; pin.add(head);
+    const cone = withOutline(new THREE.Mesh(new THREE.ConeGeometry(.026, .12, 12).rotateX(Math.PI), toon('#ff3b5c')), 1.15); cone.position.y = .07; pin.add(cone); }
+  pin.scale.setScalar(.45); pin.position.copy(ROU); pin.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), ROU.clone().normalize());
+  const tagP = tag('PRAHOVA', .34); tagP.position.copy(ROU).multiplyScalar(1.22); earth.add(tagP);
+  const hot = glow(0xffd23f, .1, 0); hot.position.copy(ROU).multiplyScalar(1.02); earth.add(hot);
+  // fluxurile de oameni (puncte aurii) care vin din toată lumea
+  const NS = 520, sPos = new Float32Array(NS * 3), streams = [];
+  for (let k = 0; streams.length < NS && k < 5000; k++) { const a = geo(-42 + rand() * 105, rand() * 360, 1.01); if (a.dot(ROU) < -.6) continue; streams.push({ a, t0: rand() * .55, d: .3 + rand() * .2 }); }
+  const sGeo = new THREE.BufferGeometry(); sGeo.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
+  const sPts = new THREE.Points(sGeo, new THREE.PointsMaterial({ color: 0xffd23f, size: .07, map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); earth.add(sPts);
+  const sunGlow = glow(0xfff1c0, 9, 1); SG.add(sunGlow);
+  const gather = t => ss(S[1].start + .2, capT(1, /Am încăpea/) + .3, t);
+  function updateGlobe(t) {
+    const ang = ANG_T - 2.6 * (1 - eout(t / (S[1].start + 2.2))) - .04 * Math.max(0, t - S[1].start - 2.2);
+    earth.rotation.set(0, ang, 0);
+    const u = eio(ss(.5, S[2].start - .3, t));
+    const cam = sph(lerp(3.5, 2.45, u), 0, lerp(.3, .62, u));
+    camera.up.set(0, 1, 0); camera.position.copy(cam); camera.lookAt(0, lerp(0, .5, u), 0);
+    const camDir = cam.clone().normalize(), side = new THREE.Vector3().crossVectors(camera.up, camDir).normalize();
+    const sun = camDir.clone().multiplyScalar(.7).addScaledVector(side, -.7).add(new THREE.Vector3(0, .4, 0)).normalize();
+    globeMat.uniforms.uSun.value.copy(sun); sunGlow.position.copy(sun).multiplyScalar(30);
+    const P = gather(t), b = ROU.clone().multiplyScalar(1.01);
+    streams.forEach((s, k) => { const v = clamp((P - s.t0) / s.d), e = eio(v); const p = s.a.clone().lerp(b, e).normalize().multiplyScalar(1.01 + .22 * Math.sin(Math.PI * e) * (1 - s.a.dot(b) * .5));
+      sPos.set(v <= 0 || v >= 1 ? [b.x * (v >= 1 ? 1 : 0), b.y * (v >= 1 ? 1 : 0), b.z * (v >= 1 ? 1 : 0)] : [p.x, p.y, p.z], k * 3);
+      if (v <= 0) sPos.set([s.a.x, s.a.y, s.a.z], k * 3); });
+    sGeo.attributes.position.needsUpdate = true;
+    sPts.visible = t >= S[1].start - .2; sPts.material.opacity = 1 - ss(capT(1, /Prahova/) + .2, S[2].start, t) * .6;
+    hot.material.opacity = P; hot.scale.setScalar(.08 + .42 * P + Math.sin(t * 9) * .02 * P);
+    pin.visible = tagP.visible = t >= capT(1, /zonă/) - .2; tagP.material.opacity = ss(capT(1, /zonă/) - .2, capT(1, /zonă/) + .2, t);
+  }
+
+  // ---------- MULȚIMEA: un câmp plin de oameni până la orizont ----------
+  const SC = new THREE.Scene(); SC.background = C3('#8fd0ff'); SC.fog = new THREE.Fog(0xbfe4ff, 70, 300);
+  SC.add(new THREE.HemisphereLight(0xffffff, 0x6a7a55, .75));
+  { const l = new THREE.DirectionalLight(0xfff0d8, .85); l.position.set(-5, 10, 8); SC.add(l); }
+  { const g = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), toon('#7cc152')); g.rotation.x = -Math.PI / 2; SC.add(g); }
+  for (let k = 0; k < 40; k++) { const hgt = 10 + rand() * 18, h = new THREE.Mesh(new THREE.SphereGeometry(hgt, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), toon(k % 2 ? '#6fb24a' : '#63a843')); h.scale.set(2.5, 1, 1); h.position.set(-500 + k * 26 + rand() * 20, 0, -280 - rand() * 60); SC.add(h); }
+  const clouds = [];
+  for (let k = 0; k < 12; k++) { const g = new THREE.Group(); for (let j = 0; j < 4; j++) { const p = new THREE.Mesh(new THREE.SphereGeometry(2.4 + rand() * 2, 12, 10), toon('#ffffff')); p.position.set(j * 2.8 - 4, rand() * 1.4, 0); g.add(p); }
+    g.position.set(rand() * 260 - 130, 34 + rand() * 20, -120 - rand() * 80); SC.add(g); clouds.push({ g, x0: g.position.x, sp: .4 + rand() * .5 }); }
+  // oamenii din mulțime: corp (cămașă + pantaloni prin culoarea vârfurilor), cap, brațe; contur negru prin copii umflate
+  const bodyG = new THREE.CylinderGeometry(.27, .23, 1.3, 8, 1, true).translate(0, .65, 0);
+  { const p = bodyG.attributes.position, c = []; for (let i = 0; i < p.count; i++) { const v = p.getY(i) < .62 ? .3 : 1; c.push(v, v, v); } bodyG.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); }
+  const headG = new THREE.SphereGeometry(.27, 9, 7).translate(0, 1.55, 0);
+  const armsG = up => merge([-1, 1].map(s => { const b = new THREE.BoxGeometry(.11, .6, .11).translate(0, -.3, 0); b.rotateZ(up ? s * -(Math.PI - .45) : s * -.12); b.translate(s * .33, 1.24, 0); return b; }));
+  function makeCrowd(N, scene) {
+    const mk = (g, m) => { const im = new THREE.InstancedMesh(g, m, N); im.frustumCulled = false; scene.add(im); return im; };
+    const cr = { N, body: mk(bodyG, toon(0xffffff, { vertexColors: true })), head: mk(headG, toon(0xffffff)), armD: mk(armsG(false), toon(0xffffff)), armU: mk(armsG(true), toon(0xffffff)),
+      oBody: mk(inflate(bodyG, .035), OUTLINE), oHead: mk(inflate(headG, .03), OUTLINE), d: [] };
+    const c = new THREE.Color();
+    for (let i = 0; i < N; i++) { c.set(COLS[(rand() * COLS.length) | 0]); cr.body.setColorAt(i, c); cr.armD.setColorAt(i, c); cr.armU.setColorAt(i, c); c.set(SKIN[(rand() * SKIN.length) | 0]); cr.head.setColorAt(i, c); }
+    return cr;
+  }
+  const M4 = new THREE.Matrix4(), Q4 = new THREE.Quaternion(), E4 = new THREE.Euler(), V3 = new THREE.Vector3(), SC3 = new THREE.Vector3();
+  function placeCrowd(cr, f) {   // f(i) → [x, y, z, ry, sc, armsUp]
+    let up = false;
+    for (let i = 0; i < cr.N; i++) { const [x, y, z, ry, s, au] = f(i); up = up || au; Q4.setFromEuler(E4.set(0, ry, 0)); M4.compose(V3.set(x, y, z), Q4, SC3.set(s, s, s));
+      cr.body.setMatrixAt(i, M4); cr.head.setMatrixAt(i, M4); cr.oBody.setMatrixAt(i, M4); cr.oHead.setMatrixAt(i, M4); cr.armD.setMatrixAt(i, M4); cr.armU.setMatrixAt(i, M4); }
+    for (const k of ['body', 'head', 'oBody', 'oHead', 'armD', 'armU']) cr[k].instanceMatrix.needsUpdate = true;
+    cr.armU.visible = up; cr.armD.visible = !up;
+  }
+  const crowd = makeCrowd(3400, SC);
+  for (let i = 0; i < crowd.N; i++) { const z = -2.6 - 270 * Math.pow(rand(), 1.55); crowd.d.push({ x: (rand() - .5) * (12 + Math.abs(z) * 1.25), z, ry: (rand() - .5) * .7, s: .9 + rand() * .22, ph: rand() * .18, tw: rand() }); }
+  // eroii din prim-plan
+  const heroes = [makeGuy('#ff7a1a', '#3d7bff'), makeGuy('#5ce1ff', '#ff3b5c', '#6b3b1d'), makeGuy('#ffd23f', '#9b8cff', '#2a1a10')];
+  const HP = [[-1.15, .6, .18], [.15, 1.3, 0], [1.35, .4, -.2]];
+  heroes.forEach((g, k) => SC.add(g.root));
+  // praful de la aterizare și unda de șoc văzută de sus
+  const puffs = [];
+  for (let k = 0; k < 46; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, color: 0xd9c7a0, transparent: true, opacity: 0, depthWrite: false })); SC.add(s);
+    const far = k >= 16; puffs.push({ s, x: far ? (rand() - .5) * 180 : (rand() - .5) * 9, z: far ? -10 - rand() * 220 : -1 - rand() * 7, r: far ? 10 + rand() * 12 : 1 + rand() * 1.5, d: rand() * .15 }); }
+  const rings = [0, .45].map(dl => { const m = new THREE.Mesh(new THREE.TorusGeometry(1, .03, 6, 120), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+    m.rotation.x = Math.PI / 2; m.position.set(0, .6, -70); SC.add(m); return { m, dl }; });
+  const jumpY = (t, ph, H) => { const u = (t - T_JUMP - ph) / (T_LAND - T_JUMP); return u > 0 && u < 1 ? H * 4 * u * (1 - u) : 0; };
+  function updateCrowd(t) {
+    const inS5 = t >= S[5].start && t < S[6].start, late = t >= S[5].start;
+    const walkT = late ? Math.min(t, S[6].start) - S[5].start : 0;
+    placeCrowd(crowd, i => { const d = crowd.d[i];
+      const y = jumpY(t, d.ph, .55 * d.s);
+      const crouch = t < T_JUMP && t > T_JUMP - .6 ? -.08 * ss(T_JUMP - .6, T_JUMP, t) : 0;
+      const turn = late ? ss(S[5].start + .2 + d.tw * .8, S[5].start + .7 + d.tw * .8, t) : 0;
+      return [d.x, Math.max(y, 0) + crouch, d.z - walkT * .8 * turn, d.ry + Math.PI * turn, d.s, y > .05]; });
+    clouds.forEach(c => { c.g.position.x = c.x0 + t * c.sp; });
+    // eroii
+    heroes.forEach((g, k) => {
+      const [x, z, ry] = HP[k], c = t * 5 + k * 1.7;
+      g.root.position.set(x, 0, z); g.root.rotation.set(0, ry, 0);
+      if (t >= S[8].start) { if (k === 1) poseGuy(g, 'shrug', c, 1); else poseGuy(g, 'idle', c); return; }
+      if (inS5) {
+        const tt = t - S[5].start, turn = ss(.15 + k * .1, .55 + k * .1, tt), walk = Math.max(0, tt - .6 - k * .1);
+        g.root.rotation.y = ry + Math.PI * turn; g.root.position.z = z - walk * 1.1;
+        poseGuy(g, walk > 0 ? 'walk' : 'idle', walk * 9 + k); return;
+      }
+      const yj = jumpY(t, k * .04, 1.05);
+      if (yj > 0) { g.root.position.y = yj; poseGuy(g, 'jump', c * 2); return; }
+      const dl = t - T_LAND;
+      if (dl >= 0 && dl < .45) { poseGuy(g, 'crouch', c, 1 - dl / .45); return; }
+      if (dl >= .45) { poseGuy(g, 'yay', c * 1.6); return; }
+      if (t > T_JUMP - .65) { poseGuy(g, 'crouch', c, ss(T_JUMP - .65, T_JUMP - .05, t)); return; }
+      poseGuy(g, 'idle', c); g.neck.rotation.y = Math.sin(t * .8 + k) * .25;
+    });
+    // praf
+    puffs.forEach((p, k) => { const a = t - T_LAND - p.d; const far = k >= 16;
+      if (a < 0 || a > 3.5) { p.s.material.opacity = 0; return; }
+      p.s.position.set(p.x + (far ? 0 : Math.sign(p.x) * a * .6), (far ? 2 : .3) + a * (far ? 3 : .5), p.z); p.s.scale.setScalar(p.r * (1 + a * .9));
+      p.s.material.opacity = (far ? .5 : .65) * ss(0, .1, a) * Math.exp(-a * 1.1); });
+    rings.forEach(r => { const a = t - S[4].start - r.dl; r.m.visible = a > 0 && t < S[5].start; const s = 3 + a * 70; r.m.scale.set(s, s, s); r.m.material.opacity = .85 * Math.exp(-a * .7); r.m.geometry.parameters; });
+    // camera (fixă sau cu o apropiere lentă; zguduirea vine doar din CSS, la impact)
+    let p, l;
+    if (t < S[3].start) { const u = ss(S[2].start, S[3].start, t); p = [0, 2.7, lerp(7.6, 6.8, u)]; l = [0, 1.15, -3]; }
+    else if (t < S[4].start) { p = [0, .55, 5.6]; l = [0, 2.3, -4]; }
+    else if (t < S[5].start) { const u = ss(S[4].start, S[5].start, t); p = [0, lerp(56, 62, u), lerp(34, 28, u)]; l = [0, 0, -70]; }
+    else if (t < S[6].start) { p = [0, 2.0, 7.8]; l = [0, 1.2, -3]; }
+    else { const u = ss(S[8].start, TOTAL, t); p = [.15, 1.55, lerp(4.9, 4.5, u)]; l = [.15, 1.95, 1.3]; }
+    camera.up.set(0, 1, 0); camera.position.set(...p); camera.lookAt(...l);
+  }
+
+  // ---------- ATOMUL: cât se mișcă Pământul ----------
+  const SA = new THREE.Scene(); SA.background = C3('#0b1030');
+  SA.add(new THREE.HemisphereLight(0xffffff, 0x223355, .8)); { const l = new THREE.DirectionalLight(0xffffff, .7); l.position.set(-3, 4, 5); SA.add(l); }
+  SA.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0x8fa8ff, size: 1.2 * PR, sizeAttenuation: false })));
+  const atom = new THREE.Group(); SA.add(atom);
+  for (let k = 0; k < 14; k++) { const v = new THREE.Vector3(rand() - .5, rand() - .5, rand() - .5).normalize().multiplyScalar(.16 + rand() * .2);
+    const n = withOutline(new THREE.Mesh(new THREE.SphereGeometry(.2, 20, 14), toon(k % 2 ? '#ff3b5c' : '#9b8cff')), 1.08); n.position.copy(v); atom.add(n); }
+  atom.add(glow(0xff8a7a, 1.6, .35));
+  const orbits = [[0, 0], [1.05, .5], [-1.05, -.5]].map(([rx, rz], k) => { const g = new THREE.Group(); g.rotation.set(rx, 0, rz); atom.add(g);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.25, .012, 6, 120), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .55 })); ring.scale.set(1, .55, 1); ring.rotation.x = Math.PI / 2; g.add(ring);
+    const e = withOutline(new THREE.Mesh(new THREE.SphereGeometry(.08, 14, 10), toon('#ffd23f')), 1.15); g.add(e); const eg = glow(0xffd23f, .5, .8); e.add(eg); return { g, e, ph: k * 2.1 }; });
+  const tagA = tag('UN ATOM', .9, '#5ce1ff'); tagA.position.set(0, 1.25, 0); SA.add(tagA);
+  function updateAtom(t) {
+    atom.rotation.set(.25, t * .5, 0);
+    orbits.forEach(o => { const a = t * 3.2 + o.ph; o.e.position.set(Math.cos(a) * 1.25, 0, Math.sin(a) * 1.25 * .55); });
+    const u = ss(T_ATOM, S[4].start, t);
+    camera.up.set(0, 1, 0); camera.position.set(0, .3, lerp(5.2, 4.4, u)); camera.lookAt(0, .1, 0);
+  }
+
+  // ---------- AEROPORTUL: cea mai lungă coadă din istorie ----------
+  const SP = new THREE.Scene(); SP.background = C3('#8fd0ff'); SP.fog = new THREE.Fog(0xbfe4ff, 140, 760);
+  SP.add(new THREE.HemisphereLight(0xffffff, 0x6a7a55, .75)); { const l = new THREE.DirectionalLight(0xfff0d8, .85); l.position.set(-6, 10, 7); SP.add(l); }
+  { const g = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), toon('#8cc95e')); g.rotation.x = -Math.PI / 2; SP.add(g);
+    const ap = new THREE.Mesh(new THREE.PlaneGeometry(120, 90), toon('#6d707a')); ap.rotation.x = -Math.PI / 2; ap.position.set(5, .02, -5); SP.add(ap);
+    const rwTex = canvasTex(64, 512, (x, w, h) => { x.fillStyle = '#3e4049'; x.fillRect(0, 0, w, h); x.fillStyle = '#f4f1e6'; for (let k = 0; k < h; k += 64) x.fillRect(29, k, 6, 34); });
+    rwTex.wrapT = THREE.RepeatWrapping; rwTex.repeat.set(1, 30);
+    const rw = new THREE.Mesh(new THREE.PlaneGeometry(26, 2400), new THREE.MeshLambertMaterial({ map: rwTex })); rw.rotation.x = -Math.PI / 2; rw.position.set(-62, .03, 300); SP.add(rw); }
+  { const term = withOutline(new THREE.Mesh(new THREE.BoxGeometry(70, 12, 18).translate(0, 6, 0), toon('#e8e2d4')), 1.01); term.position.set(-6, 0, -34); SP.add(term);
+    const glass = new THREE.Mesh(new THREE.BoxGeometry(68, 4, 18.4).translate(0, 7, 0), toon('#5ce1ff')); glass.position.set(-6, 0, -34); SP.add(glass);
+    const tower = withOutline(new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2, 26, 12).translate(0, 13, 0), toon('#e8e2d4')), 1.03); tower.position.set(-46, 0, -40); SP.add(tower);
+    const cab = withOutline(new THREE.Mesh(new THREE.CylinderGeometry(4, 3, 4, 12).translate(0, 28, 0), toon('#5ce1ff')), 1.03); cab.position.set(-46, 0, -40); SP.add(cab);
+    const tg = tag('OTOPENI', 16, '#ffffff'); tg.position.set(-6, 16, -24); SP.add(tg); }
+  function makePlane(livery = '#ff3b5c') {
+    const g = new THREE.Group(), white = toon('#f7f7f2');
+    const fus = withOutline(new THREE.Mesh(new THREE.CylinderGeometry(1.9, 1.9, 26, 20).rotateZ(Math.PI / 2), white), 1.02); fus.position.y = 3.4; g.add(fus);
+    const nose = withOutline(new THREE.Mesh(new THREE.SphereGeometry(1.9, 20, 14), white), 1.02); nose.scale.set(1.6, 1, 1); nose.position.set(13, 3.4, 0); g.add(nose);
+    const tail = withOutline(new THREE.Mesh(new THREE.ConeGeometry(1.9, 6, 20).rotateZ(Math.PI / 2), white), 1.02); tail.position.set(-16, 3.7, 0); g.add(tail);
+    const wing = withOutline(new THREE.Mesh(new THREE.BoxGeometry(5, .35, 26), white), 1.03); wing.position.set(1, 2.6, 0); g.add(wing);
+    const fin = withOutline(new THREE.Mesh(new THREE.BoxGeometry(4, 5.5, .35), toon(livery)), 1.04); fin.position.set(-16.5, 7.2, 0); fin.rotation.z = -.25; g.add(fin);
+    const stab = withOutline(new THREE.Mesh(new THREE.BoxGeometry(2.6, .25, 9), white), 1.04); stab.position.set(-17, 4.2, 0); g.add(stab);
+    const stripe = new THREE.Mesh(new THREE.CylinderGeometry(1.93, 1.93, 26, 20, 1, true, Math.PI * .1, Math.PI * .8).rotateZ(Math.PI / 2), toon(livery)); stripe.position.y = 3.0; stripe.scale.set(1, .25, 1); g.add(stripe);
+    for (const z of [-5.5, 5.5]) { const en = withOutline(new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, 3.4, 16).rotateZ(Math.PI / 2), toon('#c9ccd6')), 1.05); en.position.set(2.2, 1.6, z); g.add(en); }
+    const winM = new THREE.MeshBasicMaterial({ color: 0x1d2b44 });
+    for (let x = -11; x <= 10; x += 1.3) for (const z of [1.86, -1.86]) { const w = new THREE.Mesh(new THREE.BoxGeometry(.45, .55, .05), winM); w.position.set(x, 4.0, z); g.add(w); }
+    return g;
+  }
+  const plane = makePlane(); plane.position.set(4, 0, 0); SP.add(plane);
+  const stairs = withOutline(new THREE.Mesh(new THREE.BoxGeometry(2, .3, 6.4), toon('#ffd23f')), 1.04); stairs.position.set(14.5, 2.4, 4.6); stairs.rotation.x = .75; SP.add(stairs);
+  const plane2 = makePlane('#3d7bff'); plane2.scale.setScalar(.9); plane2.rotation.y = -Math.PI / 2; SP.add(plane2);
+  const queue = makeCrowd(1900, SP);
+  const qPath = s => { const ramp = Math.min(1, s / 24); return [14.6 + 9 * Math.sin(s * .055) * ramp + 4 * Math.sin(s * .013) * ramp, 8.2 + s * .78]; };
+  for (let i = 0; i < queue.N; i++) { const s = i * .95, [x, z] = qPath(s), [x2, z2] = qPath(s - .5); queue.d.push({ x: x + (rand() - .5) * .3, z, ry: Math.atan2(x2 - x, z2 - z), s: .9 + rand() * .2, ph: rand() * 6 }); }
+  function updateAirport(t) {
+    placeCrowd(queue, i => { const d = queue.d[i]; return [d.x, Math.abs(Math.sin(t * 1.5 + d.ph)) * .015, d.z, d.ry + Math.sin(t * .7 + d.ph) * .08, d.s, false]; });
+    // al doilea avion decolează pe pistă, în cadrul larg
+    const a = Math.max(0, t - S[7].start - .3), x = 40 * a + 6 * a * a;
+    plane2.position.set(-62, Math.max(0, x - 70) * .22, -40 + x); plane2.rotation.z = 0; plane2.rotation.x = 0; plane2.children.forEach(() => {}); plane2.rotation.set(0, -Math.PI / 2, 0); plane2.rotateZ(x > 70 ? .2 : 0);
+    let p, l;
+    if (t < S[7].start) { const u = ss(S[6].start, S[7].start, t); p = [lerp(38, 34, u), lerp(7, 6.5, u), lerp(34, 30, u)]; l = [10, 3.2, 4]; }
+    else { const u = ss(S[7].start, S[8].start, t); p = [lerp(-18, -21, u), lerp(24, 28, u), lerp(-22, -26, u)]; l = [14, 0, 110]; }
+    camera.up.set(0, 1, 0); camera.position.set(...p); camera.lookAt(...l);
+  }
+
+  // ---------- Grafica 2D (HUD, titlu, „slam"-uri, subtitrări) ----------
+  const $ = id => document.getElementById(id);
+  const hud = $('hud'), hL = $('hL'), hVal = $('hVal');
+  const titleEl = $('title'), slamEl = $('slam'), slamBig = $('slamBig'), slamSub = $('slamSub'), capEl = $('cap');
+  const flashEl = $('flash'), fadeEl = $('fade'), grainEl = $('grain');
+  const fmtN = (v, dec = 0) => { const [a, b] = v.toFixed(dec).split('.'); return a.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (b ? ',' + b : ''); };
+  const C2 = S[2].start;
+  const SLAMS = [
+    [capT(1, /miliarde/) - .1, capT(1, /conteze/) - .05, '8.000.000.000', 'oameni pe Pământ', 'gold'],
+    [capT(1, /Prahova/), S[2].start - .05, '≈ PRAHOVA', '4.000 km² · câte 2 oameni pe m²', 'cyan'],
+    [C2, C2 + .9, '3', '', 'gold'], [C2 + .93, C2 + 1.9, '2', '', 'gold'], [C2 + 1.94, T_JUMP - .03, '1', '', 'hot'],
+    [T_JUMP, S[3].start - .05, 'SARI!', '', 'hot'],
+    [capT(3, /atom/) - .1, S[4].start - .05, '< 1 ATOM', 'cât se mișcă Pământul', 'cyan'],
+    [capT(4, /nimic/), capT(4, /Doar/) - .05, 'NIMIC', '≈ 0,00000000000003 m', 'gold'],
+    [capT(5, /acasă/), S[6].start - .05, 'ACASĂ?', '8 miliarde de drumuri', 'hot'],
+    [capT(6, /cincisprezece/), capT(6, /Ca să/) - .05, '15 MIL./AN', 'pasageri prin Otopeni', 'gold'],
+    [capT(6, /\*cinci\*/), S[7].start - .05, '540 DE ANI', 'ca să plecăm toți cu avionul', 'hot'],
+    [capT(7, /coadă/), S[8].start - .05, 'COADĂ RECORD', 'cea mai mare din istorie', 'gold'],
+    [S[8].start, END + .45, 'TU AI SĂRI?', 'scrie în comentarii ↓', 'gold']
+  ];
+  const IMPACTS = [T_LAND, T_JUMP];
+  let curSlam = -1, curCap = -1;
+  function hudAt(t) {
+    if (t >= S[1].start && t < S[2].start) return ['OAMENI ADUNAȚI', fmtN(Math.round(8.1e9 * gather(t) / 1e6) * 1e6)];
+    if (t >= S[6].start && t < S[8].start) return ['ANI LA COADĂ', fmtN(Math.round(lerp(0, 540, ss(capT(6, /Ca să/), capT(6, /\*cinci\*/), t))))];
+    return null;
+  }
+  const locate = t => { for (let i = 0; i < S.length; i++) if (t < S[i].start + S[i].len) return [i, t - S[i].start]; return [S.length - 1, t - S[S.length - 1].start]; };
+  function updateText(t) {
+    const [i, lt] = locate(t);
+    const tl = clamp(t / .3) * (1 - ss(S[1].start - .3, S[1].start, t));
+    titleEl.style.opacity = tl; titleEl.style.transform = `scale(${lerp(1.25, 1, back(t / .45))}) rotate(${lerp(-4, -1.5, eout(t / .5))}deg)`;
+    const h = hudAt(t);
+    hud.style.opacity = h ? 1 : 0;
+    if (h) { hL.textContent = h[0]; hVal.textContent = h[1]; }
+    let si = -1; SLAMS.forEach((s, k) => { if (t >= s[0] && t < s[1]) si = k; });
+    if (si !== curSlam) { curSlam = si; if (si >= 0) { const s = SLAMS[si]; slamEl.className = 'slam ' + s[4]; slamBig.textContent = s[2]; slamSub.textContent = s[3]; slamSub.style.display = s[3] ? '' : 'none';
+      slamBig.style.fontSize = (s[2].length <= 2 ? 48 : Math.min(21, 86 / (s[2].length * .47))).toFixed(1) + 'cqw'; } }
+    if (si >= 0) {
+      const s = SLAMS[si], a = t - s[0], out = s[1] - t;
+      const sc = lerp(2.4, 1, back(a / .32)) * (out < .15 ? lerp(.85, 1, out / .15) : 1);
+      slamEl.style.opacity = clamp(a / .06) * clamp(out / .12);
+      slamEl.style.transform = `scale(${sc}) rotate(${lerp(-8, -2, eout(a / .3))}deg)`;
+      slamSub.style.transform = `rotate(-2deg) translateY(${lerp(30, 0, back((a - .12) / .3))}px)`; slamSub.style.opacity = clamp((a - .1) / .1);
+    } else slamEl.style.opacity = 0;
+    let ck = -1, cs = 0;
+    if (t < END) S[i].caps.forEach((c, k) => { if (lt >= c[0] - .03) { ck = i * 100 + k; cs = S[i].start + c[0]; } });
+    if (ck !== curCap) { curCap = ck; capEl.innerHTML = ck < 0 ? '' : S[i].caps[ck % 100][1].replace(/\*([^*]+)\*/g, '<span class="hl">$1</span>'); }
+    const ca = t - cs;
+    capEl.style.opacity = ck < 0 ? 0 : 1;
+    capEl.style.transform = `scale(${lerp(.72, 1, back(ca / .16))}) translateY(${lerp(14, 0, eout(ca / .16))}px)`;
+  }
+
+  // ---------- Grain + tranziții ----------
+  const grainUrl = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'), d = x.createImageData(256, 256);
+    for (let k = 0; k < d.data.length; k += 4) { const v = rand() * 255; d.data[k] = d.data[k + 1] = d.data[k + 2] = v; d.data[k + 3] = 255; } x.putImageData(d, 0, 0); return c.toDataURL(); })();
+  grainEl.style.backgroundImage = `url(${grainUrl})`;
+  function updateFx(t) {
+    const f = Math.floor(t * 12); grainEl.style.backgroundPosition = `${(f * 73) % 256}px ${(f * 151) % 256}px`;
+    let blur = 0, ty = 0, fl = 0;
+    for (const c of CUTS) { const d = t - c; if (Math.abs(d) < .12) { const k = 1 - Math.abs(d) / .12; blur = Math.max(blur, k * 7); ty += (d < 0 ? -1 : 1) * k * 3; fl = Math.max(fl, d > 0 ? k * .4 : 0); } }
+    let shake = 0; for (const c of IMPACTS) { const d = t - c; if (d >= 0 && d < .45) shake = Math.max(shake, (1 - d / .45) * (c === T_LAND ? 1.6 : .5)); }
+    const sx = Math.sin(t * 61) * shake, sy = Math.cos(t * 53) * shake;
+    cvs.style.filter = blur > .1 ? `blur(${blur.toFixed(1)}px)` : 'none';
+    cvs.style.transform = `translate(${sx}%, ${ty + sy}%) scale(${1 + shake * .02})`;
+    const dl = t - T_LAND; fl = Math.max(fl, dl >= 0 && dl < .25 ? .6 * (1 - dl / .25) : 0);
+    flashEl.style.opacity = fl;
+  }
+
+  // ---------- Sunet: voce + muzică + efecte ElevenLabs (aceeași listă e folosită la exportul MP4) ----------
+  const CUES = [];
+  {
+    const X = (at, name, gain, o = {}) => CUES.push({ at: Math.max(0, at), name, gain, fadeIn: o.fi ?? .08, fadeOut: o.fo ?? .6, dur: o.dur ?? null, offset: o.off ?? 0 });
+    X(0, 'music', .32, { fi: .3, dur: S[2].start + .15, fo: .3 });
+    X(T_LAND + .7, 'music', .32, { fi: .8, dur: 21.5, fo: .5 });
+    X(T_LAND + .7 + 21, 'music', .32, { fi: .4, dur: TOTAL - (T_LAND + .7 + 21), fo: 1.4 });
+    X(S[1].start + .3, 'whoosh', .22, { fo: .4 });
+    X(capT(1, /miliarde/) - .1, 'hit', .3, { fi: .01, fo: .8 });
+    X(S[2].start - .1, 'crowd', .45, { fi: .2, dur: T_JUMP - S[2].start + .3, fo: .2 });
+    X(C2, 'tick', .55, { fi: .005, fo: .4 }); X(C2 + .93, 'tick', .55, { fi: .005, fo: .4 }); X(C2 + 1.94, 'tick', .6, { fi: .005, fo: .4 });
+    X(T_JUMP - .05, 'cheer', .55, { fi: .02, fo: .8 });
+    X(T_JUMP, 'boing', .22, { fi: .005, fo: .3 });
+    X(T_LAND - .03, 'boom', .85, { fi: .01, fo: 1.2 });
+    X(T_ATOM - .2, 'whoosh', .25, { fo: .4 });
+    X(T_ATOM + .05, 'atom', .45, { fi: .02, fo: .6 });
+    X(S[4].start, 'rumble', .55, { fi: .05, fo: 1 });
+    X(S[5].start, 'crowd', .3, { fi: .3, off: 2, dur: S[6].start - S[5].start + .2, fo: .3 });
+    X(S[6].start - .2, 'whoosh', .22, { fo: .4 });
+    X(S[6].start, 'airport', .4, { fi: .3, dur: S[8].start - S[6].start + .2, fo: .4 });
+    X(capT(6, /\*cinci\*/), 'hit', .3, { fi: .01, fo: .8 });
+    X(S[7].start + .2, 'jet', .5, { fi: .3, fo: 1 });
+    X(S[8].start - .05, 'hit', .3, { fi: .01, fo: .8 });
+  }
+  const DUCK = .55;
+  window.__cues = { voice: S.map((s, i) => ({ at: s.start, i })), sfx: CUES, duck: S.map((s, i) => [s.start - .1, s.start + s.dur + .15]), duckGain: DUCK, total: TOTAL, sfxGain: .9, voiceGain: 1 };
+
+  let ac = null, master, voiceBus, sfxBus, duckG, buffers = [], SFXB = {}, decoding = null;
+  const live = [];
+  function setupAudio() {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    ac = new AC();
+    master = ac.createGain(); master.gain.value = .9; master.connect(ac.destination);
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -10; comp.ratio.value = 3; comp.connect(master);
+    voiceBus = ac.createGain(); voiceBus.gain.value = 1; voiceBus.connect(comp);
+    duckG = ac.createGain(); duckG.connect(comp); sfxBus = ac.createGain(); sfxBus.gain.value = .9; sfxBus.connect(duckG);
+    const b64 = s => { const bin = atob(s), u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k); return u.buffer; };
+    const dec = ab => new Promise((res, rej) => { const p = ac.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+    decoding = Promise.all([Promise.all(AUDIO.map(s => dec(b64(s)))).then(b => { buffers = b; }),
+      ...Object.entries(SFX).map(([k, v]) => dec(b64(v)).then(b => { SFXB[k] = b; }))]);
+    return decoding;
+  }
+  let t0 = 0;
+  function startAudio() {
+    live.splice(0).forEach(o => { try { o.stop(); } catch (e) {} });
+    t0 = ac.currentTime + .15;
+    buffers.forEach((b, i) => { const s = ac.createBufferSource(); s.buffer = b; s.connect(voiceBus); s.start(t0 + S[i].start); live.push(s); });
+    for (const c of CUES) {
+      const b = SFXB[c.name]; if (!b) continue;
+      const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = b;
+      const dur = Math.min(c.dur ?? 1e9, b.duration - c.offset), at = t0 + c.at;
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(c.gain, at + c.fadeIn);
+      g.gain.setValueAtTime(c.gain, Math.max(at + c.fadeIn, at + dur - c.fadeOut)); g.gain.linearRampToValueAtTime(0, at + dur);
+      s.connect(g); g.connect(sfxBus); s.start(at, c.offset, dur + .02); live.push(s);
+    }
+    const dg = duckG.gain; dg.cancelScheduledValues(0); dg.setValueAtTime(1, t0);
+    for (const [a, b] of window.__cues.duck) { dg.setTargetAtTime(DUCK, t0 + a, .05); dg.setTargetAtTime(1, t0 + b, .12); }
+  }
+  let keepAlive = null;
+  function iosUnmute() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    if (keepAlive) { keepAlive.play().catch(() => {}); return; }
+    const sr = 8000, n = sr / 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const w = (o, s) => [...s].forEach((c, k) => v.setUint8(o + k, c.charCodeAt(0)));
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    keepAlive = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); keepAlive.play().catch(() => {});
+  }
+
+  // ---------- Redare ----------
+  function render3D(t) {
+    const v = viewAt(t);
+    if (v === 'globe') { updateGlobe(t); renderer.render(SG, camera); }
+    else if (v === 'crowd') { updateCrowd(t); renderer.render(SC, camera); }
+    else if (v === 'atom') { updateAtom(t); renderer.render(SA, camera); }
+    else { updateAirport(t); renderer.render(SP, camera); }
+  }
+  function renderAt(t) { render3D(t); updateText(t); updateFx(t); }
+  const assetsBase = Promise.all([fontsReady, landReady]);
+  if (RENDER) {
+    $('start').hidden = true;
+    window.__ready = assetsBase.then(() => { renderAt(0); renderAt(S[3].start); renderAt(T_ATOM + .3); renderAt(S[6].start + .5); return { total: TOTAL }; });
+    window.__frame = t => { renderAt(t); return true; };
+    return;
+  }
+  const startEl = $('start'), pausedEl = $('paused'), endEl = $('end'), playBtn = $('playBtn'), sndBtn = $('snd');
+  let state = 'idle', fallbackT = 0, fallbackFrom = 0, muted = false;
+  const now = () => performance.now() / 1000;
+  const getT = () => { if (state === 'idle') return 0; if (ac && buffers.length) return Math.max(0, ac.currentTime - t0); return fallbackT + (state === 'playing' ? now() - fallbackFrom : 0); };
+  setupAudio();
+  Promise.all([assetsBase, decoding || Promise.resolve()]).catch(() => {}).then(() => { playBtn.classList.remove('busy'); $('startHint').textContent = 'Cu sunet · ' + Math.floor(TOTAL / 60) + ':' + String(Math.round(TOTAL % 60)).padStart(2, '0'); });
+  function play() {
+    if (playBtn.classList.contains('busy')) return;
+    iosUnmute(); startEl.hidden = true; endEl.hidden = true; sndBtn.hidden = false; curSlam = curCap = -2;
+    if (ac) { ac.resume(); if (buffers.length) startAudio(); }
+    fallbackT = 0; fallbackFrom = now(); state = 'playing';
+  }
+  function pause() { if (state !== 'playing') return; state = 'paused'; fallbackT += now() - fallbackFrom; if (ac) ac.suspend(); pausedEl.hidden = false; }
+  function resume() { if (state !== 'paused') return; pausedEl.hidden = true; fallbackFrom = now(); state = 'playing'; iosUnmute(); if (ac) ac.resume(); }
+  function finish() { state = 'ended'; endEl.hidden = false; endEl.style.opacity = 1; sndBtn.hidden = true; }
+  playBtn.addEventListener('click', e => { e.stopPropagation(); play(); });
+  startEl.addEventListener('click', e => { e.stopPropagation(); play(); });
+  $('againBtn').addEventListener('click', e => { e.stopPropagation(); play(); });
+  pausedEl.addEventListener('click', e => { e.stopPropagation(); resume(); });
+  stage.addEventListener('click', e => { if (state === 'playing' && !e.target.closest('.snd')) pause(); });
+  sndBtn.addEventListener('click', e => { e.stopPropagation(); muted = !muted; if (master) master.gain.setTargetAtTime(muted ? 0 : .9, ac.currentTime, .05);
+    $('sndOn').hidden = muted; $('sndOff').hidden = !muted; sndBtn.setAttribute('aria-label', muted ? 'Pornește sunetul' : 'Oprește sunetul'); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+  function frame(ms) {
+    let t = getT();
+    if (state === 'playing' && t >= TOTAL) finish();
+    if (state === 'ended') t = TOTAL;
+    if (state === 'playing' && t >= END + .4) { endEl.hidden = false; endEl.style.opacity = ss(END + .4, END + 1.1, t); }
+    if (state === 'idle') { updateGlobe(ms / 1000 % 3); renderer.render(SG, camera); } else renderAt(t);
+    fadeEl.style.opacity = state === 'idle' ? 0 : (1 - ss(0, .35, t));
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>

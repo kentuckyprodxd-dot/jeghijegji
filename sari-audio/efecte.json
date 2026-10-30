@@ -1,0 +1,12 @@
+{
+ "music":  ["Upbeat playful quirky background music for a fun science video, pizzicato strings and light percussion, energetic, no vocals", 22, true],
+ "crowd":  ["Huge outdoor crowd of thousands of people murmuring and chattering in a big open field, excited", 10, false],
+ "cheer":  ["Massive stadium crowd cheering and shouting together, huge roar of excitement", 4, false],
+ "boom":   ["Enormous deep thunderous boom of millions of feet landing on the ground at once, rumbling like thunder, rolling echo", 6, false],
+ "rumble": ["Low ground rumble and dust settling after a huge impact, distant rolling thunder", 6, false],
+ "airport":["Busy airport terminal ambience, boarding announcements in the distance, rolling suitcases, crowd chatter", 10, false],
+ "jet":    ["Passenger jet airplane taking off, powerful engine roar passing by", 6, false],
+ "atom":   ["Tiny delicate magical sparkle and shimmer, microscopic world, soft and bright", 3, false],
+ "boing":  ["Cartoon jump spring boing sound, playful", 1.5, false],
+ "tick":   ["Single dramatic countdown clock tick with deep reverb, cinematic", 1.5, false]
+}
