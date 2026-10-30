@@ -3,7 +3,7 @@ const { chromium } = require('playwright'); const path = require('path'); const 
 (async () => {
   const [file, out, fps, a, b] = process.argv.slice(2);
   const br = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  const p = await br.newPage({ viewport: { width: 540, height: 960 }, deviceScaleFactor: 2 });
+  const p = await br.newPage({ viewport: { width: 540, height: 960 }, deviceScaleFactor: +(process.env.DPR || 2) });
   p.on('pageerror', e => console.log('pageerror:', e.message));
   await p.goto('file://' + path.resolve(file) + '?render');
   await p.evaluate(() => window.__ready);

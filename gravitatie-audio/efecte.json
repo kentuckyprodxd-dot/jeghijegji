@@ -1,0 +1,10 @@
+{
+ "city":   ["Busy city street ambience during a sunny day, traffic passing, distant voices, realistic field recording", 9, false],
+ "rumble": ["Low deep eerie rumble and pressure change, air vibrating, ears popping sensation, cinematic", 6, false],
+ "wind":   ["Powerful howling wind gust rushing past, leaves and paper debris rustling and flying, realistic", 9, false],
+ "float":  ["Ethereal weightless floating ambience, soft airy shimmer and low pad, slow and dreamy, cinematic", 12, false],
+ "creak":  ["Cars creaking and rattling as their suspension springs up, metal groaning, a car alarm starting in the distance", 5, false],
+ "birds":  ["Flock of pigeons flapping wings and taking off from a city square", 3, false],
+ "crash":  ["Many cars and objects crashing down onto a street at the same moment, heavy metal impacts, glass shattering, debris", 4, false],
+ "alarms": ["Several car alarms ringing in a city street after a crash, distant sirens, people shouting far away", 9, false]
+}
