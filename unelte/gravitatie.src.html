@@ -51,7 +51,7 @@
   .hud .bar { margin-top: 2.4cqw; width: 46cqw; height: .8cqw; background: rgba(255, 255, 255, .2); border-radius: 1cqw; overflow: hidden; }
   .hud .bar i { display: block; height: 100%; width: 0; background: var(--red); }
   .hud.good .bar i { background: var(--gold); }
-  .hud .g { margin-top: 2.2cqw; font: 800 3.8cqw/1 var(--f-mono); letter-spacing: .08em; color: var(--red); }
+  .hud .g { margin-top: 2.4cqw; font: 900 4.4cqw/1 var(--f-cap); letter-spacing: .06em; color: var(--red); text-shadow: 0 .3cqw 0 rgba(0, 0, 0, .6), 0 0 2cqw rgba(0, 0, 0, .7); }
   .hud.good .g { color: var(--gold); }
 
   .title { position: absolute; left: 6%; right: 6%; top: 10%; z-index: 4; text-align: center; font: 400 12.4cqw/.95 var(--f-slam); text-transform: uppercase; letter-spacing: .005em;
@@ -604,8 +604,8 @@
   const T_LEAF = S[3].start + .8, T_TRASH = capT(4, /ușor/);
   const RATE_J = 10 / (T_TEN - S[2].start);
   // trafic des pe bulevard, între z = -300 și 80
-  const carAt = (c, k, t) => { const L = 380, idx = Math.floor(k / 4), sp = 7.5 * c.sp;
-    let z = c.dir < 0 ? 80 - idx * L / 24 - c.z0 * 6 - t * sp : -300 + idx * L / 24 + c.z0 * 6 + t * sp;
+  const carAt = (c, k, t) => { const L = 380, idx = Math.floor(k / 4), sp = 7.5 * [1, .82, 1, .82][k % 4];
+    let z = c.dir < 0 ? 80 - idx * L / 24 - c.z0 * 3 - t * sp : -300 + idx * L / 24 + c.z0 * 3 + t * sp;
     z = ((z + 300) % L + L) % L - 300; return { x: c.lane, z, ry: c.dir < 0 ? 0 : Math.PI, vis: 1, brake: 0, head: 1, tail: 1 }; };
   function update(t) {
     const i = segAt(t), Pi = P[i]; cur = Pi;
@@ -654,7 +654,7 @@
     for (const m of [carBody, carTop, carWheels]) m.instanceMatrix.needsUpdate = true;
     carLightG.attributes.position.needsUpdate = carLightG.attributes.aCol.needsUpdate = true;
     // frunze și hârtii: zac pe jos, vântul le ridică, cad încet după revenire
-    const sc = shot(t, i), fw = dirAE(sc.az, 0), C = sc.p.clone().addScaledVector(fw, sc.p.y > 8 ? 16 : 9);
+    const sc = shot(t, i), s0 = shot(i ? S[i].start : 0, i), C = s0.p.clone().addScaledVector(dirAE(s0.az, 0), s0.p.y > 8 ? 16 : 10);
     const leafY = (n, tt) => { const tau = tt - T_LEAF, v = 1.2 + 2.6 * n.sp, y = tau * v - n.y * 18; return y <= 0 ? 0 : y % 30; };
     noteD.forEach((n, k) => {
       let y = leafY(n, t);
@@ -662,16 +662,16 @@
       const up = Math.min(y / 2, 1), tau = t - T_LEAF;
       const x = C.x + n.x * 14 + Math.sin(tau * .8 * n.sp + n.ph) * 1.6 * up, z = C.z + n.z * 14 + Math.cos(tau * .7 * n.sp + n.ph) * 1.6 * up;
       if (up > 0) q4.setFromAxisAngle(n.ax, tau * 3 * n.sp + n.ph); else q4.setFromEuler(e4.set(-Math.PI / 2, n.ph, 0));
-      m4.compose(vT.set(x, .015 + y, z), q4, one.clone().multiplyScalar(n.k)); notes.setMatrixAt(k, m4);
+      if (Math.hypot(x - sc.p.x, .015 + y - sc.p.y, z - sc.p.z) < 2.5) m4.makeScale(0, 0, 0); else m4.compose(vT.set(x, .015 + y, z), q4, one.clone().multiplyScalar(n.k)); notes.setMatrixAt(k, m4);
     });
     notes.instanceMatrix.needsUpdate = true;
     // gunoaie
     trashD.forEach((d, k) => { let h = rise(t, T_TRASH, 5 * d.v, 1.1); if (t > T_REV) h = drop(h, t);
       const a = Math.min(t, T_REV) - T_TRASH; q4.setFromEuler(e4.set(d.e.x + Math.max(0, a) * d.sp * .4, d.e.y, d.e.z + Math.max(0, a) * d.sp * .3));
-      m4.compose(vT.set(d.x, .25 * d.k * .8 + h, d.z), q4, one.clone().set(d.k, d.k * .8, d.k)); trash.setMatrixAt(k, m4); });
+      if (Math.hypot(d.x - sc.p.x, h - sc.p.y, d.z - sc.p.z) < 5) m4.makeScale(0, 0, 0); else m4.compose(vT.set(d.x, .25 * d.k * .8 + h, d.z), q4, one.clone().set(d.k, d.k * .8, d.k)); trash.setMatrixAt(k, m4); });
     trash.instanceMatrix.needsUpdate = true;
     // oameni: merg, apoi se opresc; săritorii urcă (10 m în T_TEN)
-    const showP = i >= 1 && i <= 5;
+    const showP = false;
     ppl.forEach((d, k) => {
       if (k >= NPpl && i !== 2 || k < NPpl && i === 2 && Math.abs(d.z + 11) < 4) { m4.makeScale(0, 0, 0); }
       else if (!showP) m4.makeScale(0, 0, 0);
@@ -687,7 +687,7 @@
       if (k < NPpl) { pBody.setMatrixAt(k, m4); pHead.setMatrixAt(k, m4); }
     });
     // săritorul din cadrul 2 ocupă ultimul loc din instanțe
-    { const d = ppl[NPpl]; const y = i === 2 ? d.v * RATE_J * Math.max(0, t - S[2].start - .4) : -50; q4.setFromEuler(e4.set(Math.sin(t * .4) * .15, .4, 0));
+    { const d = ppl[NPpl]; const y = -50; q4.setFromEuler(e4.set(Math.sin(t * .4) * .15, .4, 0));
       m4.compose(vT.set(d.x, y, d.z), q4, one); pBody.setMatrixAt(NPpl - 1, m4); pHead.setMatrixAt(NPpl - 1, m4); }
     pBody.instanceMatrix.needsUpdate = pHead.instanceMatrix.needsUpdate = true;
     // mingea (cadrul 2): lovită în sus, nu se mai oprește
