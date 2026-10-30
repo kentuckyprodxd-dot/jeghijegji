@@ -1,0 +1,15 @@
+{
+ "city":     ["Busy city street ambience during the day, traffic passing, distant voices, realistic field recording", 9, false],
+ "horns":    ["Angry drivers honking car horns in a traffic jam, long aggressive honks, city street", 6, false],
+ "shutter":  ["Metal roller shutter of a shop being pulled down and slamming shut, echo in the street", 3, false],
+ "wind":     ["Cold wind gusts blowing through an empty city street, paper litter rustling and tumbling", 9, false],
+ "power":    ["Electrical power failure, transformer hum dying down with a heavy clunk, lights switching off", 4, false],
+ "night":    ["Eerie silent city at night during a blackout, distant dog barking, soft wind, no traffic", 10, false],
+ "rain":     ["Steady rain falling on an empty street at night, water dripping from gutters, realistic", 9, false],
+ "empty":    ["Desolate empty city on a foggy morning, crows cawing in the distance, light wind, very quiet", 9, false],
+ "dawn":     ["City waking up at sunrise, birds singing, a few cars starting and driving by softly", 10, false],
+ "hope":     ["Warm hopeful cinematic swell, soft strings and piano, gentle and emotional, no drums", 12, false],
+ "tension":  ["Slow dark cinematic low strings drone, unsettling tension slowly building, no drums", 15, false],
+ "whoosh":   ["Soft deep cinematic air whoosh transition, smooth, natural", 2, false],
+ "hit":      ["Deep cinematic low impact hit with soft reverb tail, trailer style", 3, false]
+}

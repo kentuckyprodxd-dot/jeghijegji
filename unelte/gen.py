@@ -1,20 +1,12 @@
+# Folosire: python3 gen.py <dir-audio> <text.json> [--count]
 # Generează vocea (ElevenLabs, Chris, with-timestamps) pe segmente + subtitrări 1–3 cuvinte
 import os, json, base64, re, sys, urllib.request
 KEY = os.environ['ELEVENLABS_API_KEY']
 VOICE = 'iP95p4xoKVk53GoZ742B'
 OUT = sys.argv[1]
-SEG = [
- "Ce s-ar întâmpla dacă Luna ar începe să cadă spre Pământ?",
- "Acum e la trei sute optzeci și patru de mii de kilometri. Dar imaginează-ți că, într-o noapte, începe să se apropie.",
- "Primele care simt asta sunt oceanele. Mareele cresc de zeci de ori. Apa urcă peste porturi, peste străzi, peste orașe întregi.",
- "Pe cer, Luna devine uriașă. Noaptea e aproape la fel de luminoasă ca ziua.",
- "Apoi, la mai puțin de zece mii de kilometri, gravitația Pământului o rupe în bucăți.",
- "Pentru o clipă, Pământul ar avea un inel, ca Saturn. Cea mai frumoasă priveliște din istorie.",
- "Doar că bucățile încep să cadă. Miliarde de tone de rocă. Cerul ia foc, iar oceanele încep să fiarbă.",
- "Vestea bună? Luna face exact opusul. Se îndepărtează de noi cu patru centimetri pe an.",
- "Tu ai vrea să vezi inelul… chiar dacă ar fi ultimul lucru pe care îl vezi?",
-]
-HL = {'luna','pământ','pământ?','oceanele','zeci','orașe','uriașă','ziua','bucăți','inel','saturn','istorie','cadă','foc','fiarbă','opusul','patru','centimetri','inelul','ultimul','apropie'}
+# textul vine dintr-un fișier JSON: {"seg": [...], "hl": [...]}
+SCRIPT = json.load(open(sys.argv[2]))
+SEG, HL = SCRIPT['seg'], set(SCRIPT['hl'])
 if '--count' in sys.argv: print(sum(len(s) for s in SEG)); sys.exit()
 os.makedirs(OUT, exist_ok=True)
 timing = []
