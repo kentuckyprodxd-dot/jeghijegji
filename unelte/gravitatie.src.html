@@ -449,7 +449,7 @@
   }
 
   // mașini
-  const NC = 96;
+  const NC = 448;
   const cars = [];
   const extr = (pts, w, bev) => { const sh = new THREE.Shape(pts.map(([z, y]) => new THREE.Vector2(-z, y)));
     const g = new THREE.ExtrudeGeometry(sh, { depth: w, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 2, curveSegments: 4 });
@@ -610,9 +610,10 @@
   const T_LEAF = S[3].start + .8, T_TRASH = capT(4, /ușor/);
   const RATE_J = 10 / (T_TEN - S[2].start);
   // trafic des pe bulevard, între z = -300 și 80
-  const carAt = (c, k, t) => { const L = 380, idx = Math.floor(k / 4), sp = 7.5 * [1, .82, 1, .82][k % 4];
-    let z = c.dir < 0 ? 80 - idx * L / 24 - c.z0 * 3 - t * sp : -300 + idx * L / 24 + c.z0 * 3 + t * sp;
-    z = ((z + 300) % L + L) % L - 300; return { x: c.lane, z, ry: c.dir < 0 ? 0 : Math.PI, vis: 1, brake: 0, head: 1, tail: 1 }; };
+  // bucla e lungă (−1500…300), ca mașinile să nu mai apară/dispară la capătul vizibil al bulevardului
+  const carAt = (c, k, t) => { const L = 1800, NL = NC / 4, idx = Math.floor(k / 4), sp = 7.5 * [1, .82, 1, .82][k % 4];
+    let z = c.dir < 0 ? 300 - idx * L / NL - c.z0 * 3 - t * sp : -1500 + idx * L / NL + c.z0 * 3 + t * sp;
+    z = ((z + 1500) % L + L) % L - 1500; return { x: c.lane, z, ry: c.dir < 0 ? 0 : Math.PI, vis: 1, brake: 0, head: 1, tail: 1 }; };
   function update(t) {
     const i = segAt(t), Pi = P[i]; cur = Pi;
     const pw = power(t, i);
@@ -660,7 +661,9 @@
     for (const m of [carBody, carTop, carWheels]) m.instanceMatrix.needsUpdate = true;
     carLightG.attributes.position.needsUpdate = carLightG.attributes.aCol.needsUpdate = true;
     // frunze și hârtii: zac pe jos, vântul le ridică, cad încet după revenire
-    const sc = shot(t, i), s0 = shot(i ? S[i].start : 0, i), C = s0.p.clone().addScaledVector(dirAE(s0.az, 0), s0.p.y > 8 ? 16 : 10);
+    const sc = shot(t, i), s1 = shot((S[i + 1] ? S[i + 1].start : TOTAL) - .01, i), s0 = shot(i ? S[i].start : 0, i), C = s0.p.clone().addScaledVector(dirAE(s0.az, 0), s0.p.y > 8 ? 16 : 10);
+    const nearPath = (x, y, z, r) => { const a = s0.p, b = s1.p, ab = b.clone().sub(a), l2 = Math.max(ab.lengthSq(), 1e-6);
+      const k = clamp(((x - a.x) * ab.x + (y - a.y) * ab.y + (z - a.z) * ab.z) / l2); return Math.hypot(x - a.x - ab.x * k, y - a.y - ab.y * k, z - a.z - ab.z * k) < r; };
     const leafY = (n, tt) => { const tau = tt - T_LEAF, v = 1.2 + 2.6 * n.sp, y = tau * v - n.y * 18; return y <= 0 ? 0 : y % 30; };
     noteD.forEach((n, k) => {
       let y = leafY(n, t);
@@ -668,13 +671,13 @@
       const up = Math.min(y / 2, 1), tau = t - T_LEAF;
       const x = C.x + n.x * 14 + Math.sin(tau * .8 * n.sp + n.ph) * 1.6 * up, z = C.z + n.z * 14 + Math.cos(tau * .7 * n.sp + n.ph) * 1.6 * up;
       if (up > 0) q4.setFromAxisAngle(n.ax, tau * 3 * n.sp + n.ph); else q4.setFromEuler(e4.set(-Math.PI / 2, n.ph, 0));
-      if (Math.hypot(x - sc.p.x, .015 + y - sc.p.y, z - sc.p.z) < 2.5) m4.makeScale(0, 0, 0); else m4.compose(vT.set(x, .015 + y, z), q4, one.clone().multiplyScalar(n.k)); notes.setMatrixAt(k, m4);
+      if (nearPath(x, .015 + y, z, 2.5)) m4.makeScale(0, 0, 0); else m4.compose(vT.set(x, .015 + y, z), q4, one.clone().multiplyScalar(n.k)); notes.setMatrixAt(k, m4);
     });
     notes.instanceMatrix.needsUpdate = true;
     // gunoaie
     trashD.forEach((d, k) => { let h = rise(t, T_TRASH, 5 * d.v, 1.1); if (t > T_REV) h = drop(h, t);
       const a = Math.min(t, T_REV) - T_TRASH; q4.setFromEuler(e4.set(d.e.x + Math.max(0, a) * d.sp * .4, d.e.y, d.e.z + Math.max(0, a) * d.sp * .3));
-      if (Math.hypot(d.x - sc.p.x, h - sc.p.y, d.z - sc.p.z) < 5) m4.makeScale(0, 0, 0); else m4.compose(vT.set(d.x, .25 * d.k * .8 + h, d.z), q4, one.clone().set(d.k, d.k * .8, d.k)); trash.setMatrixAt(k, m4); });
+      if (nearPath(d.x, .3, d.z, 5) || nearPath(d.x, h, d.z, 5)) m4.makeScale(0, 0, 0); else m4.compose(vT.set(d.x, .25 * d.k * .8 + h, d.z), q4, one.clone().set(d.k, d.k * .8, d.k)); trash.setMatrixAt(k, m4); });
     trash.instanceMatrix.needsUpdate = true;
     // oameni: merg, apoi se opresc; săritorii urcă (10 m în T_TEN)
     const showP = false;
