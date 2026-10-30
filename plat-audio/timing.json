@@ -1,0 +1,336 @@
+[
+ {
+  "caps": [
+   [
+    0.0,
+    "Ce s-ar întâmpla"
+   ],
+   [
+    0.755,
+    "dacă Pământul"
+   ],
+   [
+    1.405,
+    "ar fi,"
+   ],
+   [
+    1.649,
+    "de fapt,"
+   ],
+   [
+    2.113,
+    "*plat?*"
+   ]
+  ],
+  "dur": 2.833,
+  "text": "Ce s-ar întâmpla dacă Pământul ar fi, de fapt, plat?"
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Să zicem"
+   ],
+   [
+    0.488,
+    "că arată"
+   ],
+   [
+    0.836,
+    "ca pe harta"
+   ],
+   [
+    1.416,
+    "celor care cred"
+   ],
+   [
+    2.125,
+    "asta."
+   ],
+   [
+    2.995,
+    "*Polul* *Nord*"
+   ],
+   [
+    3.68,
+    "în mijloc,"
+   ],
+   [
+    4.203,
+    "iar *Antarctica,*"
+   ],
+   [
+    5.201,
+    "un zid"
+   ],
+   [
+    5.48,
+    "de *gheață*"
+   ],
+   [
+    5.875,
+    "pe margine."
+   ]
+  ],
+  "dur": 6.734,
+  "text": "Să zicem că arată ca pe harta celor care cred asta. Polul Nord în mijloc, iar Antarctica, un zid de gheață pe margine."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Prima problemă:"
+   ],
+   [
+    0.836,
+    "*gravitația.*"
+   ],
+   [
+    2.218,
+    "Ea ar trage"
+   ],
+   [
+    2.926,
+    "spre *centrul*"
+   ],
+   [
+    3.553,
+    "discului,"
+   ],
+   [
+    4.389,
+    "nu în jos."
+   ]
+  ],
+  "dur": 5.433,
+  "text": "Prima problemă: gravitația. Ea ar trage spre centrul discului, nu în jos."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "În mijloc ai"
+   ],
+   [
+    0.522,
+    "sta *normal.*"
+   ],
+   [
+    1.498,
+    "Dar cu cât"
+   ],
+   [
+    2.043,
+    "te apropii"
+   ],
+   [
+    2.485,
+    "de margine,"
+   ],
+   [
+    3.495,
+    "solul pare"
+   ],
+   [
+    4.133,
+    "un deal tot"
+   ],
+   [
+    4.714,
+    "mai *abrupt.*"
+   ],
+   [
+    5.608,
+    "La margine,"
+   ],
+   [
+    6.327,
+    "ai merge"
+   ],
+   [
+    6.699,
+    "pe un *perete.*"
+   ]
+  ],
+  "dur": 7.616,
+  "text": "În mijloc ai sta normal. Dar cu cât te apropii de margine, solul pare un deal tot mai abrupt. La margine, ai merge pe un perete."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Apa și aerul"
+   ],
+   [
+    0.766,
+    "ar curge"
+   ],
+   [
+    1.231,
+    "și ele spre"
+   ],
+   [
+    1.695,
+    "centru."
+   ],
+   [
+    2.717,
+    "*Polul* *Nord*"
+   ],
+   [
+    3.355,
+    "ar ajunge sub"
+   ],
+   [
+    3.971,
+    "un *ocean* uriaș,"
+   ],
+   [
+    5.236,
+    "iar marginile"
+   ],
+   [
+    6.049,
+    "ar rămâne fără"
+   ],
+   [
+    6.699,
+    "*aer.*"
+   ]
+  ],
+  "dur": 7.291,
+  "text": "Apa și aerul ar curge și ele spre centru. Polul Nord ar ajunge sub un ocean uriaș, iar marginile ar rămâne fără aer."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Și n-ar"
+   ],
+   [
+    0.325,
+    "mai exista *fusuri*"
+   ],
+   [
+    1.149,
+    "orare."
+   ],
+   [
+    2.183,
+    "Soarele ar răsări"
+   ],
+   [
+    3.019,
+    "peste tot"
+   ],
+   [
+    3.471,
+    "în *aceeași*"
+   ],
+   [
+    3.855,
+    "secundă."
+   ]
+  ],
+  "dur": 4.598,
+  "text": "Și n-ar mai exista fusuri orare. Soarele ar răsări peste tot în aceeași secundă."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Dar partea cea"
+   ],
+   [
+    0.72,
+    "mai tare?"
+   ],
+   [
+    1.718,
+    "Un disc atât"
+   ],
+   [
+    2.357,
+    "de mare nu"
+   ],
+   [
+    3.228,
+    "poate *rezista.*"
+   ],
+   [
+    4.69,
+    "Propria gravitație"
+   ],
+   [
+    5.724,
+    "l-ar strânge"
+   ],
+   [
+    6.293,
+    "înapoi,"
+   ],
+   [
+    7.07,
+    "până devine"
+   ],
+   [
+    7.605,
+    "o *sferă.*"
+   ]
+  ],
+  "dur": 8.498,
+  "text": "Dar partea cea mai tare? Un disc atât de mare nu poate rezista. Propria gravitație l-ar strânge înapoi, până devine o sferă."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "De asta toate"
+   ],
+   [
+    0.615,
+    "planetele mari"
+   ],
+   [
+    1.231,
+    "sunt *rotunde.*"
+   ],
+   [
+    2.752,
+    "Nu e"
+   ],
+   [
+    3.007,
+    "o alegere."
+   ],
+   [
+    3.738,
+    "E *fizică.*"
+   ]
+  ],
+  "dur": 4.83,
+  "text": "De asta toate planetele mari sunt rotunde. Nu e o alegere. E fizică."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Tu ce-ai vrea"
+   ],
+   [
+    0.546,
+    "să vezi"
+   ],
+   [
+    0.848,
+    "de pe *marginea*"
+   ],
+   [
+    1.509,
+    "lumii?"
+   ]
+  ],
+  "dur": 2.09,
+  "text": "Tu ce-ai vrea să vezi de pe marginea lumii?"
+ }
+]

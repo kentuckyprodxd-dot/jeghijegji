@@ -10,5 +10,10 @@ s = s.replace('/*SFX*/{}', json.dumps({os.path.splitext(f)[0]: b(f'{audio}/sfx/{
 if moon != "-":
     mime = 'image/png' if moon.endswith('.png') else 'image/jpeg'
     s = s.replace("/*MOON*/''", f"'data:{mime};base64," + b(moon) + "'")
+# imagini suplimentare: nume=cale → /*IMG_nume*/''
+for arg in sys.argv[5:]:
+    k, p = arg.split('=', 1)
+    mime = 'image/png' if p.endswith('.png') else 'image/jpeg'
+    s = s.replace(f"/*IMG_{k}*/''", f"'data:{mime};base64," + b(p) + "'")
 open(out, 'w').write(s)
 print(out, len(s) // 1024, 'KB')

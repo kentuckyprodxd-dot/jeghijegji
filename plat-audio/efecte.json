@@ -1,0 +1,12 @@
+{
+ "space":   ["Deep space ambience, soft cosmic drone with gentle shimmering pads, cinematic, calm and vast", 20, true],
+ "morph":   ["Massive planet transforming, deep rumbling earth grinding and stretching, cinematic whoosh, epic", 5, false],
+ "wind":    ["Strong wind blowing across an open grassy hill, gusts, outdoor", 10, false],
+ "steps":   ["Footsteps walking slowly on grass and gravel, heavy breathing climbing a steep hill", 8, false],
+ "water":   ["Enormous ocean water rushing and flowing, deep roaring flood, cinematic", 8, false],
+ "sunrise": ["Bright magical sunrise swell, warm shimmering cinematic rise, uplifting", 5, false],
+ "crack":   ["Planet crust cracking and breaking apart, deep rock fractures, lava hissing, massive collapse rumble", 7, false],
+ "epic":    ["Epic emotional cinematic orchestral swell, strings and choir, awe inspiring, no drums", 15, false],
+ "whoosh":  ["Smooth deep cinematic air whoosh transition, clean and soft", 2, false],
+ "boom":    ["Deep cinematic sub boom impact with long reverb tail, trailer style, clean", 4, false]
+}
