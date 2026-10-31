@@ -224,6 +224,7 @@
     ['Diverse', 'Ce animal e pe steagul Țării Galilor?', ['Un leu', 'Un dragon', 'Un vultur', 'Un urs'], 1, 'Dragonul roșu, „Y Ddraig Goch”, apare pe steagul oficial din 1959.'],
   ];
 
+  /*EXTRA*/
   // ---------- Ordinea întrebărilor: amestecată la fiecare pornire (fără ?amestec=0) ----------
   const order = Q.map((_, i) => i);
   if (P.get('amestec') !== '0') for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
@@ -339,6 +340,6 @@
     else if (e.key === 'f' || e.key === 'F') { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
     else if (e.key === 'Enter') start();
   });
-  if (P.get('auto') === '1') { $('start').hidden = true; showQuestion(); }
+  if (P.get('auto') === '1') { audioInit(); if (ac) ac.resume().catch(() => {}); $('start').hidden = true; showQuestion(); document.addEventListener('click', () => { audioInit(); if (ac) ac.resume(); }, { once: true }); }
 })();
 </script>

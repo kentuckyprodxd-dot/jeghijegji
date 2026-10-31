@@ -1,0 +1,34 @@
+QUIZ LIVE TIKTOK, LEGAT DIRECT DE CHAT
+======================================
+
+Ce face: pornește quiz-ul (291 de întrebări) și citește singur chatul live-ului tău.
+Oamenii scriu A, B, C sau D, iar quiz-ul arată procentele, primii 3 care au răspuns corect și clasamentul.
+
+PRIMA DATĂ (o singură dată)
+1. Instalează Node.js de pe https://nodejs.org (butonul verde „LTS”, apoi Next, Next, Finish).
+2. Dezarhivează folderul ăsta undeva, de exemplu pe Desktop.
+
+DE FIECARE DATĂ CÂND DAI LIVE
+1. Pornește live-ul din TikTok LIVE Studio.
+2. Dă dublu-click pe PORNESTE.bat.
+   - Prima dată te întreabă numele tău de TikTok (fără @). Îl ține minte în utilizator.txt.
+   - Prima dată instalează și ce îi trebuie, durează cam un minut.
+   - Când apare „🟢 Conectat la live-ul lui @…”, chatul ajunge în quiz.
+3. Pune quiz-ul pe live, în unul dintre aceste două feluri:
+   A) În TikTok LIVE Studio: „Adaugă sursă” → „Link” → scrii  http://localhost:8080/?auto=1
+      Fă sursa cât tot ecranul (scenă verticală).
+   B) Deschizi  http://localhost:8080  în Chrome, apeși F (ecran complet) și ▶,
+      iar în LIVE Studio adaugi „Captură fereastră” cu fereastra de Chrome.
+      Pentru sunet, activează în LIVE Studio sunetul de pe calculator.
+4. Lasă fereastra neagră a programului deschisă cât ții live-ul. Când termini, o închizi.
+
+PROBLEME
+- „nu e live acum”: programul încearcă singur la fiecare 30 de secunde. Pornește live-ul și așteaptă.
+- „Portul 21213 e deja folosit”: ai TikFinity deschis. Închide-l, sau folosește-l pe el (quiz-ul merge și cu TikFinity).
+- Nu se aude muzica în sursa „Link”: folosește varianta B, cu Captură fereastră și sunetul de pe calculator.
+
+TASTE (în fereastra quiz-ului): Spațiu = pauză · → = următoarea · R = arată răspunsul · M = sunet · F = ecran complet
+SETĂRI în adresă: ?auto=1&t=20 (20 de secunde pe întrebare) · &r=10 (cât stă răspunsul) · &pauza=15 · &vol=0.5
+
+Notă: legătura cu chatul folosește biblioteca gratuită „tiktok-live-connector”, care nu e oficială TikTok.
+Dacă TikTok schimbă ceva, poate să nu mai meargă o vreme, până apare o versiune nouă.

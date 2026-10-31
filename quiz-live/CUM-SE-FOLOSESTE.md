@@ -5,7 +5,7 @@ Pagina rulează singură, la nesfârșit:
 2. Se arată răspunsul corect, împreună cu o curiozitate.
 3. Trece la următoarea întrebare.
 
-Sunt 113 întrebări, amestecate din nou la fiecare pornire, din categoriile: Geografie, România, Istorie, Știință, Spațiu, Animale, Sport, Cultură și Diverse. La fiecare 10 întrebări apare o pauză scurtă cu „Câte ai știut?” sau, dacă e conectat chatul, cu clasamentul.
+Sunt 291 de întrebări, amestecate din nou la fiecare pornire, din categoriile: Geografie, România, Istorie, Știință, Spațiu, Animale, Sport, Cultură și Diverse. La fiecare 10 întrebări apare o pauză scurtă cu „Câte ai știut?” sau, dacă e conectat chatul, cu clasamentul.
 
 ## Cum îl pui pe live (TikTok LIVE Studio)
 1. Deschide `quiz-live-descarcare.html` în Chrome.
@@ -30,7 +30,10 @@ Sunt 113 întrebări, amestecate din nou la fiecare pornire, din categoriile: Ge
 
 Le poți combina, de exemplu: `quiz-live-descarcare.html?t=20&vol=0.6`
 
-## Bonus: citește chatul singur (cu TikFinity)
+## Legat direct de chatul TikTok (fără TikFinity)
+Descarcă `quiz-live-tiktok.zip`, dezarhivează-l și urmează pașii din `CITESTE-MA.txt`. Pe scurt: instalezi o dată Node.js, apoi la fiecare live dai dublu-click pe `PORNESTE.bat` și pui în TikTok LIVE Studio sursa „Link” cu adresa `http://localhost:8080/?auto=1`.
+
+## Varianta cu TikFinity
 Dacă ai TikFinity (tikfinity.zerody.one) pornit pe calculator, conectat la live-ul tău, pagina se leagă singură la el, prin WebSocket, la `ws://localhost:21213`. În colț apare „🟢 CHAT CONECTAT” și, de acolo:
 - pagina numără câți au răspuns și arată procentele pentru fiecare variantă;
 - afișează primii 3 care au răspuns corect (🥇🥈🥉);

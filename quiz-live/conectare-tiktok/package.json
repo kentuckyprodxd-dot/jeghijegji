@@ -1,0 +1,13 @@
+{
+  "name": "quiz-live-tiktok",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Quiz de cultură generală pentru TikTok LIVE, legat direct la chatul live-ului",
+  "scripts": { "start": "node server.mjs" },
+  "dependencies": {
+    "tiktok-live-connector": "2.5.0",
+    "ws": "^8.18.0"
+  },
+  "engines": { "node": ">=20" }
+}
