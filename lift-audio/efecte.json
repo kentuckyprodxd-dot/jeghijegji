@@ -1,0 +1,10 @@
+{
+ "ocean":  ["Open ocean ambience on an offshore platform, waves, steady wind, distant seagulls", 10, false],
+ "hum":    ["Powerful futuristic elevator capsule accelerating upward, electric motor hum rising in pitch, smooth, cinematic", 8, false],
+ "wind":   ["High altitude wind rushing past a moving capsule, airy whoosh fading as air gets thinner", 8, false],
+ "pass":   ["Large space station gliding past very close, deep soft cinematic whoosh with low rumble", 4, false],
+ "glass":  ["Single delicate glass clink, then a soft eerie floating shimmer", 3, false],
+ "creak":  ["Huge steel cable under extreme tension, deep metallic creaking and groaning, strain", 5, false],
+ "snap":   ["Massive steel cable snapping violently, whip crack and metal ping with deep reverb", 3, false],
+ "micro":  ["Delicate glittering microscopic science shimmer, crystalline, futuristic and soft", 6, false]
+}
