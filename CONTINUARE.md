@@ -3,7 +3,7 @@
 Toate videourile de până acum sunt în rădăcina repo-ului (`*.html`, `*.mp4`, `*-descriere.md`, `*-audio/`). Ultimul: `luna-cade` („Ce-ar fi dacă Luna ar cădea pe Pământ?"), primul în stil realist.
 
 ## Ce vrea autorul
-- Idei noi „ce-ar fi dacă…", în română, care să prindă pe TikTok/Reels/Shorts. Nu repeta temele: apocalipsa zombi, fără Soare, gaura neagră, gaura prin Pământ, internet 30 de zile, lumea fără oameni, Pământul se oprește, Luna cade, lumea bună, lumea rea 50 de zile, gravitația dispare 5 secunde, timpul se oprește, toți oamenii sar deodată, Pământul plat, liftul spațial.
+- Idei noi „ce-ar fi dacă…", în română, care să prindă pe TikTok/Reels/Shorts. Nu repeta temele: apocalipsa zombi, fără Soare, gaura neagră, gaura prin Pământ, internet 30 de zile, lumea fără oameni, Pământul se oprește, Luna cade, lumea bună, lumea rea 50 de zile, gravitația dispare 5 secunde, timpul se oprește, toți oamenii sar deodată, Pământul plat, liftul spațial, Pământul gol pe dinăuntru.
 - **Stil realist** (nu cartoon cu contur): lumini și umbre naturale, ceață, cer, materiale.
 - **Cameră fixă în orașe/străzi** (trepied, fără dolly și fără tremur „de mână”): autorul a văzut orice mișcare a camerei ca pe o „stradă care se mișcă / se glitchuiește”. Se mișcă doar obiectele. Traficul trebuie să fie o buclă lungă, cu capetele în afara cadrului (mașinile nu au voie să apară/dispară în cadru), iar pe aceeași bandă toate mașinile au aceeași viteză.
 - **Formatul preferat (cerut din nou de autor): cel „vechi”, cartoon motion design** — personaje 3D cu umbrire cel și contur negru, culori vii, „slam”-uri mari cu cifre (Anton + etichetă galbenă), HUD cu contoare, subtitrări cinetice și **mai multe scene diferite** în același video (glob, personaje, obiecte, infografic). Șablonul e `unelte/sari.src.html` (makeGuy/poseGuy, mulțimi instanțiate cu contur, glob cu mască de uscat, efecte ElevenLabs + muzică ElevenLabs). Autorul s-a plâns că videourile realiste cu orașul ieșeau „la fel de fiecare dată”.
@@ -12,6 +12,8 @@ Toate videourile de până acum sunt în rădăcina repo-ului (`*.html`, `*.mp4`
 - **Sunete bune**, generate cu ElevenLabs (`POST /v1/sound-generation`), puse discret sub voce. Fără bipuri / zgomot sintetizat.
 - 45–60 s; MP4 vertical 1080×1920 trimis autorului, pagina publicată ca artifact, descriere + hashtag-uri + comentariu fixat + text copertă (`*-descriere.md`), commit + push.
 - Verifică întâi creditele: `GET /v1/user/subscription` (planul e **free**, 10.000 caractere/lună; vocile din bibliotecă, inclusiv cele românești, nu merg pe free prin API).
+
+- **Credite ElevenLabs (cheia din `ELEVENLABS_API_KEY`) s-au terminat pe octombrie** (reset pe 29 nov). Autorul a conectat **conectorul ElevenLabs MCP** (alt workspace, cu credite): vocea se generează cu `creative_generate_speech` (Chris = `iP95p4xoKVk53GoZ742B`, `eleven_multilingual_v2`, `generations_count: 1`, câte un segment pe apel, în același flow), se descarcă din `content_url` (link semnat, valabil 2 ore), iar subtitrările se fac cu `unelte/aliniere.py` (pauze + punctuație, fără timestamps). Efectele se pot refolosi din `*-audio/sfx/`.
 
 ## Unelte (folderul `unelte/`)
 - `gen.py <dir>` — vocea pe segmente (ElevenLabs `eleven_multilingual_v2`, Chris `iP95p4xoKVk53GoZ742B`, endpoint `with-timestamps`) + `timing.json` cu subtitrări de 1–3 cuvinte. Textul și cuvintele evidențiate se editează în script.
