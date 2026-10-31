@@ -39,13 +39,16 @@ wss.on('error', e => { if (e.code === 'EADDRINUSE') console.log(`⚠️  Portul 
 const send = obj => { const s = JSON.stringify(obj); for (const c of clients) if (c.readyState === 1) c.send(s); };
 
 // 3) legătura cu live-ul TikTok (se reconectează singură)
+let retry = null;
+const again = (sec) => { clearTimeout(retry); retry = setTimeout(connect, sec * 1000); };
 async function connect() {
-  const conn = new TikTokLiveConnection(user);
+  // al doilea argument e obligatoriu în versiunea 2.5 a bibliotecii; fără istoricul vechi de chat (nu vrem voturi din trecut)
+  const conn = new TikTokLiveConnection(user, { processInitialData: false });
   conn.on(WebcastEvent.CHAT, d => {
     const u = d.user || {};
     send({ event: 'chat', data: { uniqueId: u.uniqueId || d.uniqueId, nickname: u.nickname || d.nickname || u.uniqueId, comment: d.comment } });
   });
-  conn.on(ControlEvent.DISCONNECTED, () => { console.log('🔌 Deconectat de la live. Reîncerc în 10 secunde…'); setTimeout(connect, 10000); });
+  conn.on(ControlEvent.DISCONNECTED, () => { console.log('🔌 Deconectat de la live. Reîncerc în 10 secunde…'); conn.removeAllListeners(); again(10); });
   conn.on(WebcastEvent.STREAM_END, () => console.log('⏹️  Live-ul s-a încheiat.'));
   try {
     const st = await conn.connect();
@@ -53,7 +56,7 @@ async function connect() {
   } catch (e) {
     const msg = String(e && (e.message || e));
     console.log(/offline|not live|UserOffline/i.test(msg) ? `⏳ @${user} nu e live acum. Reîncerc în 30 de secunde… (pornește live-ul din TikTok LIVE Studio)` : `⚠️  Nu m-am putut conecta: ${msg}. Reîncerc în 30 de secunde…`);
-    setTimeout(connect, 30000);
+    again(30);
   }
 }
 connect();
