@@ -1,6 +1,6 @@
 # Cum continui videourile (pentru o sesiune nouă)
 
-Toate videourile de până acum sunt în rădăcina repo-ului (`*.html`, `*.mp4`, `*-descriere.md`, `*-audio/`). Ultimul: `luna-cade` („Ce-ar fi dacă Luna ar cădea pe Pământ?"), primul în stil realist.
+Toate videourile sunt în rădăcina repo-ului (`*.html`, `*.mp4`, `*-descriere.md`, `*-audio/`). Ultimele: `plat`, `lift`, `gol`, `ocean` (stil cinematic, cel mai apreciat), `sari` (cartoon). Tot aici e și quiz-ul pentru TikTok LIVE (`quiz-live/`).
 
 ## Ce vrea autorul
 - Idei noi „ce-ar fi dacă…", în română, care să prindă pe TikTok/Reels/Shorts. Nu repeta temele: apocalipsa zombi, fără Soare, gaura neagră, gaura prin Pământ, internet 30 de zile, lumea fără oameni, Pământul se oprește, Luna cade, lumea bună, lumea rea 50 de zile, gravitația dispare 5 secunde, timpul se oprește, toți oamenii sar deodată, Pământul plat, liftul spațial, Pământul gol pe dinăuntru, oceanele dispar.
@@ -14,6 +14,14 @@ Toate videourile de până acum sunt în rădăcina repo-ului (`*.html`, `*.mp4`
 - Verifică întâi creditele: `GET /v1/user/subscription` (planul e **free**, 10.000 caractere/lună; vocile din bibliotecă, inclusiv cele românești, nu merg pe free prin API).
 
 - **Credite ElevenLabs (cheia din `ELEVENLABS_API_KEY`) s-au terminat pe octombrie** (reset pe 29 nov). Autorul a conectat **conectorul ElevenLabs MCP** (alt workspace, cu credite): vocea se generează cu `creative_generate_speech` (Chris = `iP95p4xoKVk53GoZ742B`, `eleven_multilingual_v2`, `generations_count: 1`, câte un segment pe apel, în același flow), se descarcă din `content_url` (link semnat, valabil 2 ore), iar subtitrările se fac cu `unelte/aliniere.py` (pauze + punctuație, fără timestamps). Efectele se pot refolosi din `*-audio/sfx/`.
+
+## Rețeta rapidă (cum s-au făcut ultimele videouri, ~1 oră)
+1. Idee nouă (vezi lista de teme folosite) + scenariu în 8 segmente scurte (~600 de caractere), cu un twist la final și o întrebare pentru comentarii.
+2. Vocea: prin conectorul ElevenLabs MCP (`creative_create_flow`, apoi câte un `creative_generate_speech` pe segment, cu Chris și `generations_count: 1`), apoi descarci `content_url` în `<nume>-audio/s0..s7.mp3`, `loudnorm` la −16 și `python3 unelte/aliniere.py <nume>-audio <nume>-audio/text.json`. Dacă cheia din `ELEVENLABS_API_KEY` are iar credite (după 29 nov), merge și `gen.py`, care are timestamps exacte.
+3. Efectele: refolosești din `*-audio/sfx/` (space, epic, whoosh, boom, wind, water, crack, micro, tension etc.). Le generezi nou doar dacă e nevoie.
+4. Pagina: copiezi cel mai apropiat șablon cinematic (`unelte/ocean.src.html`, `gol.src.html`, `lift.src.html` sau `plat.src.html`) și înlocuiești secțiunea de scene (de la „Elemente comune” la „Text”), SLAMS, HUD, CUES și `render3D`. Construiești cu `python3 unelte/build.py src audio - out.html earth=plat-audio/pamant-nasa.jpg land=sari-audio/land.png`.
+5. Verifici cu `DPR=1 node unelte/snap.js` (10–15 cadre, într-un singur sheet), corectezi încadrarea, apoi randezi cu `DPR=1.5`, 25 fps, 2 procese (`render.js`), `mix.py`, ffmpeg la 5500k.
+6. Trimiți MP4-ul, publici artifactul, scrii `*-descriere.md`, actualizezi lista de teme de aici și faci commit + push pe `claude/video-animatie-javascript-nou-f3vm8b` și pe `claude/video-animatie-javascript-648fuu`.
 
 ## Unelte (folderul `unelte/`)
 - `gen.py <dir>` — vocea pe segmente (ElevenLabs `eleven_multilingual_v2`, Chris `iP95p4xoKVk53GoZ742B`, endpoint `with-timestamps`) + `timing.json` cu subtitrări de 1–3 cuvinte. Textul și cuvintele evidențiate se editează în script.
