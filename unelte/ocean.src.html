@@ -1,0 +1,553 @@
+<meta charset="utf-8">
+<title>Oceanele dispar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@600;800;900&family=JetBrains+Mono:wght@700&display=swap">
+<style>
+  /* Cadru vertical 9:16, aspect cinematic: randare 3D cu post-procesare (bloom, ACES, gradare), text curat deasupra */
+  :root {
+    --bg: #04050a;
+    --ink: #f7f4ee;
+    --warm: #ffd27a;
+    --sky: #8fd3ff;
+    --muted: rgba(247, 244, 238, .72);
+    --f-slam: "Anton", "Impact", "Arial Narrow", sans-serif;
+    --f-cap: "Montserrat", "Arial Black", system-ui, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--f-cap);
+    display: grid; place-items: center;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px; box-sizing: border-box; overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage {
+    position: relative;
+    width: min(100%, calc((100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 9 / 16));
+    aspect-ratio: 9 / 16; max-width: 100%;
+    border-radius: 16px; overflow: hidden; background: #000;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+    user-select: none; -webkit-user-select: none; container-type: inline-size;
+  }
+  body.render { padding: 0; display: block; }
+  body.render .stage { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+  canvas#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .fade { position: absolute; inset: 0; z-index: 7; background: #000; opacity: 0; pointer-events: none; }
+  .flash { position: absolute; inset: 0; z-index: 7; background: #fff3dc; opacity: 0; pointer-events: none; }
+  .shade { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(to top, rgba(0, 0, 0, .45), transparent 32%), linear-gradient(to bottom, rgba(0, 0, 0, .3), transparent 18%); }
+
+  .hud { position: absolute; left: 6%; top: 5%; z-index: 5; opacity: 0; text-shadow: 0 2px 12px rgba(0, 0, 0, .7); }
+  .hud .l { font: 800 2.7cqw/1 var(--f-cap); letter-spacing: .3em; color: var(--muted); }
+  .hud .v { margin-top: 1.4cqw; font: 400 12cqw/.9 var(--f-slam); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+
+  .title { position: absolute; left: 7%; right: 7%; top: 12%; z-index: 4; text-align: center; opacity: 0; text-shadow: 0 .6cqw 3cqw rgba(0, 0, 0, .6); }
+  .title .k { display: block; font: 800 3.8cqw/1 var(--f-cap); letter-spacing: .34em; color: var(--muted); margin-bottom: 3cqw; }
+  .title .m { font: 400 14.5cqw/.92 var(--f-slam); text-transform: uppercase; letter-spacing: .01em; }
+  .title em { font-style: normal; color: var(--warm); }
+
+  .slam { position: absolute; left: 6%; right: 6%; top: 30%; z-index: 4; text-align: center; opacity: 0; pointer-events: none; }
+  .slam .big { font: 400 17cqw/.92 var(--f-slam); letter-spacing: .01em; white-space: nowrap; text-shadow: 0 .5cqw 3cqw rgba(0, 0, 0, .55); }
+  .slam .sub { margin-top: 2.6cqw; display: inline-block; padding: 1.5cqw 3.2cqw; border-radius: 99px; background: rgba(10, 12, 20, .45); border: 1px solid rgba(255, 255, 255, .22);
+    font: 800 3.1cqw/1.2 var(--f-cap); text-transform: uppercase; letter-spacing: .14em; color: var(--ink); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .slam.warm .big { color: var(--warm); } .slam.sky .big { color: var(--sky); }
+
+  .cap { position: absolute; left: 6%; right: 6%; bottom: 17%; z-index: 4; text-align: center; font: 900 8.4cqw/1.08 var(--f-cap); text-transform: uppercase; letter-spacing: -.01em;
+    text-shadow: 0 .4cqw 0 rgba(0, 0, 0, .35), 0 0 3.5cqw rgba(0, 0, 0, .55); }
+  .cap .hl { color: var(--warm); }
+  .trench { position: absolute; left: 6%; right: 6%; top: 27%; z-index: 4; opacity: 0; pointer-events: none; padding: 3cqw; border-radius: 4cqw; background: rgba(5, 10, 20, .55); border: 1px solid rgba(255, 255, 255, .18); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+  .trench svg { display: block; width: 100%; height: auto; }
+  .trench .tl { font: 800 15px Montserrat, Arial, sans-serif; fill: rgba(255, 255, 255, .85); letter-spacing: .08em; } .trench .gold { fill: #ffd27a; font-size: 18px; }
+
+  .endcard { position: absolute; left: 7%; right: 7%; top: 27%; z-index: 4; text-align: center; opacity: 0; pointer-events: none; }
+  .endcard .q { font: 400 13.5cqw/.95 var(--f-slam); text-transform: uppercase; text-shadow: 0 .6cqw 3cqw rgba(0, 0, 0, .7); }
+  .endcard .q em { font-style: normal; color: var(--warm); }
+  .endcard .c { margin-top: 4.5cqw; font: 800 3.6cqw/1.3 var(--f-cap); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+
+  .snd { position: absolute; top: 3.6%; right: 5%; z-index: 9; width: 9.5cqw; height: 9.5cqw; min-width: 34px; min-height: 34px; border: 0; border-radius: 50%; padding: 0;
+    background: rgba(0, 0, 0, .42); color: var(--ink); display: grid; place-items: center; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .snd svg { width: 52%; height: 52%; fill: currentColor; }
+  .snd:focus-visible, .play:focus-visible { outline: 2px solid var(--warm); outline-offset: 3px; }
+  .overlay { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5cqw; text-align: center; padding: 0 8%; cursor: pointer;
+    background: radial-gradient(circle at 50% 52%, rgba(4, 5, 10, .1), rgba(4, 5, 10, .82)); }
+  .overlay h1 { margin: 0; font: 400 14cqw/.92 var(--f-slam); text-transform: uppercase; text-shadow: 0 .6cqw 3cqw rgba(0, 0, 0, .7); }
+  .overlay h1 em { font-style: normal; color: var(--warm); }
+  .overlay p { margin: 0; font: 800 3.4cqw/1.4 var(--f-cap); color: var(--muted); }
+  .play { width: 20cqw; height: 20cqw; border-radius: 50%; border: 0; padding: 0; background: var(--ink); color: #0a0c10; display: grid; place-items: center; cursor: pointer; box-shadow: 0 1cqw 4cqw rgba(0, 0, 0, .5); }
+  .play svg { width: 40%; height: 40%; fill: currentColor; margin-left: 8%; }
+  .play.busy { opacity: .45; } .play.again svg { margin-left: 0; }
+  .overlay.paused { background: rgba(4, 5, 10, .35); }
+  .sources { font: 700 2.6cqw/1.5 var(--f-cap); color: var(--muted); max-width: 94%; text-transform: none; }
+</style>
+<div class="stage" id="stage">
+  <canvas id="gl"></canvas>
+  <div class="shade"></div>
+  <div class="hud" id="hud"><div class="l" id="hL"></div><div class="v" id="hV"></div></div>
+  <div class="title" id="title"><span class="k">Ce-ar fi dacă</span><span class="m">ar dispărea toată apa din <em>oceane?</em></span></div>
+  <div class="slam" id="slam"><div class="big" id="slamBig"></div><div class="sub" id="slamSub"></div></div>
+  <div class="cap" id="cap"></div>
+  <div class="trench" id="trench"><svg viewBox="0 0 400 300" aria-label="Groapa Marianelor comparată cu Everestul">
+    <defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c6aa0" stop-opacity=".55"/><stop offset="1" stop-color="#06121f" stop-opacity=".9"/></linearGradient></defs>
+    <path id="tFill" d="M0 30 L120 30 L150 40 L178 280 L222 280 L250 40 L280 30 L400 30 L400 300 L0 300 Z" fill="url(#tg)"/>
+    <path id="tLine" d="M0 30 L120 30 L150 40 L178 280 L222 280 L250 40 L280 30 L400 30" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="700" stroke-dashoffset="700"/>
+    <path id="tEv" d="M200 280 L163 77 L175 95 L182 84 L188 92 L200 64 L212 92 L218 84 L225 95 L237 77 Z" transform="translate(0,0)" fill="#ffd27a" fill-opacity=".9" stroke="#fff" stroke-width="1.5" opacity="0"/>
+    <text x="8" y="22" class="tl">NIVELUL MĂRII · 0 m</text><text x="8" y="292" class="tl">−11.000 m</text>
+    <text id="tEvT" x="250" y="140" class="tl gold" opacity="0">EVEREST</text><text id="tEvT2" x="250" y="160" class="tl" opacity="0">8.849 m</text></svg></div>
+  <div class="endcard" id="endcard"><div class="q">Ce-ai explora pe fundul <em>oceanului?</em></div><div class="c">Scrie în comentarii</div></div>
+  <div class="flash" id="flash"></div>
+  <div class="fade" id="fade"></div>
+
+  <button class="snd" id="snd" aria-label="Oprește sunetul" hidden>
+    <svg viewBox="0 0 24 24" id="sndOn"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+    <svg viewBox="0 0 24 24" id="sndOff" hidden><path d="M16.5 12A4.5 4.5 0 0 0 14 8v2.2l2.45 2.45c.03-.2.05-.42.05-.65zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.8 8.8 0 0 0 21 12a9 9 0 0 0-7-8.8v2.1A7 7 0 0 1 19 12zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.420.93-2.25 1.18v2.06a9 9 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/></svg>
+  </button>
+  <div class="overlay" id="start">
+    <h1>Oceanele <em>dispar</em></h1>
+    <button class="play busy" id="playBtn" aria-label="Pornește videoul"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+    <p id="startHint">Se încarcă…</p>
+  </div>
+  <div class="overlay paused" id="paused" hidden>
+    <button class="play" aria-label="Continuă"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+  </div>
+  <div class="overlay" id="end" hidden>
+    <h1>Ce-ai explora pe fundul <em>oceanului?</em></h1>
+    <button class="play again" id="againBtn" aria-label="Vezi din nou"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg></button>
+    <div class="sources">Scenariu ipotetic. La un nivel al mării cu ~120 m mai jos (ca în ultima eră glaciară), Marea Britanie era legată de Europa, iar Asia de America prin podul Beringia. Groapa Marianelor are ~10.900–11.000 m; Everestul are 8.849 m. Marte a avut lacuri și râuri acum peste 3,5 miliarde de ani. Adâncimile din animație sunt aproximative. Textura Pământului: NASA Visible Earth. Voce: ElevenLabs (Chris); efecte și muzică: ElevenLabs.</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const TIMING = /*TIMING*/[];
+  const AUDIO = /*AUDIO*/[];
+  const SFX = /*SFX*/{};                 // efecte sonore și muzică (ElevenLabs sound-generation)
+  const EARTH = /*IMG_earth*/'';         // NASA Visible Earth, Blue Marble
+  const LANDM = /*IMG_land*/'';          // mască uscat/apă
+  const MOONT = /*IMG_moon*/'';          // NASA LRO
+
+  document.documentElement.lang = 'ro';
+  const RENDER = /[?&]render\b/.test(location.search);
+  if (RENDER) document.body.classList.add('render');
+  const $ = id => document.getElementById(id);
+  let seed = 3141;
+  const rand = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const ss = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const eio = u => { u = clamp(u); return u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; };
+  const eout = u => 1 - Math.pow(1 - clamp(u), 3);
+
+  // ---------- Cronologie ----------
+  const LEAD = .35, GAP = .45, TAIL = 2.8;
+  const S = TIMING.map(s => ({ caps: s.caps, dur: s.dur }));
+  { let acc = LEAD; S.forEach(s => { s.start = acc; acc += s.dur + GAP; }); }
+  const SEND = i => S[i].start + S[i].dur;
+  const END = SEND(7), TOTAL = END + TAIL;
+  const capT = (i, re) => S[i].start + S[i].caps[Math.max(0, S[i].caps.findIndex(c => re.test(c[1])))][0];
+  const segAt = t => { let i = 0; for (let k = 1; k < S.length; k++) if (t >= S[k].start - GAP / 2) i = k; return i; };
+  const CUTS = [S[2].start - .22, S[3].start - .22, S[6].start - .2, S[7].start - .2];
+
+  // ---------- Three.js + post-procesare ----------
+  const stage = $('stage'), cvs = $('gl');
+  const renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: false, preserveDrawingBuffer: RENDER, powerPreference: 'high-performance' });
+  const PR = RENDER ? (window.devicePixelRatio || 2) : Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(PR);
+  renderer.autoClear = false; renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const camera = new THREE.PerspectiveCamera(42, 9 / 16, .02, 400);
+  const RTC = renderer.capabilities.isWebGL2 ? THREE.WebGLMultisampleRenderTarget : THREE.WebGLRenderTarget;
+  const rtMain = new RTC(4, 4, { type: THREE.HalfFloatType });
+  const rtA = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }), rtB = rtA.clone();
+  const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), quadScene = new THREE.Scene();
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2)); quadScene.add(quad);
+  const VQ = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }';
+  const brightM = new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: VQ,
+    fragmentShader: 'uniform sampler2D t; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb; float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(.85, 2.2, l), 1.); }' });
+  const blurM = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, d: { value: new THREE.Vector2() } }, vertexShader: VQ,
+    fragmentShader: `uniform sampler2D t; uniform vec2 d; varying vec2 vUv; void main(){
+      vec3 c = texture2D(t, vUv).rgb * .227;
+      c += (texture2D(t, vUv + d * 1.385).rgb + texture2D(t, vUv - d * 1.385).rgb) * .316;
+      c += (texture2D(t, vUv + d * 3.231).rgb + texture2D(t, vUv - d * 3.231).rgb) * .07;
+      gl_FragColor = vec4(c, 1.); }` });
+  const compM = new THREE.ShaderMaterial({ uniforms: { tS: { value: null }, tB: { value: null }, uBloom: { value: .9 }, uExp: { value: 1 }, uTime: { value: 0 }, uRes: { value: new THREE.Vector2() }, uSat: { value: 1.08 } }, vertexShader: VQ,
+    fragmentShader: `uniform sampler2D tS, tB; uniform float uBloom, uExp, uTime, uSat; uniform vec2 uRes; varying vec2 vUv;
+      vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+      void main(){
+        vec2 dc = vUv - .5; float ca = .0022 * dot(dc, dc) * 4.;
+        vec3 c = vec3(texture2D(tS, vUv + dc * ca).r, texture2D(tS, vUv).g, texture2D(tS, vUv - dc * ca).b);
+        c += texture2D(tB, vUv).rgb * uBloom;
+        c = aces(c * uExp);
+        c = pow(c, vec3(1. / 2.2));
+        float l = dot(c, vec3(.299, .587, .114)); c = mix(vec3(l), c, uSat);
+        c = mix(c, c * vec3(1.04, 1., .95), smoothstep(.45, 1., l)) ; c = mix(c, c * vec3(.94, 1., 1.06), 1. - smoothstep(0., .4, l));
+        vec2 v = dc * vec2(1., .85); c *= 1. - dot(v, v) * 1.1;
+        float g = fract(sin(dot(floor(vUv * uRes) + floor(uTime * 24.) * 37., vec2(12.9898, 78.233))) * 43758.5453);
+        c += (g - .5) * .022;
+        gl_FragColor = vec4(c, 1.); }` });
+  function resize() {
+    const r = cvs.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+    const w = Math.max(2, Math.round(r.width * PR)), h = Math.max(2, Math.round(r.height * PR));
+    rtMain.setSize(w, h); rtA.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2)); rtB.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2)); compM.uniforms.uRes.value.set(w, h);
+  }
+  new ResizeObserver(resize).observe(stage); resize();
+  const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, quadCam); };
+  function present(layers, t, bloom = .9, exp = 1) {
+    renderer.setRenderTarget(rtMain); renderer.clear();
+    layers.forEach(([sc, cm], k) => { if (k) renderer.clearDepth(); renderer.render(sc, cm); });
+    brightM.uniforms.t.value = rtMain.texture; pass(brightM, rtA);
+    for (let k = 0; k < 2; k++) {
+      blurM.uniforms.t.value = rtA.texture; blurM.uniforms.d.value.set(1 / rtA.width, 0); pass(blurM, rtB);
+      blurM.uniforms.t.value = rtB.texture; blurM.uniforms.d.value.set(0, 1 / rtA.height); pass(blurM, rtA);
+    }
+    Object.assign(compM.uniforms, {}); compM.uniforms.tS.value = rtMain.texture; compM.uniforms.tB.value = rtA.texture; compM.uniforms.uBloom.value = bloom; compM.uniforms.uExp.value = exp; compM.uniforms.uTime.value = t;
+    pass(compM, null);
+  }
+  const loadTex = src => new Promise(res => { const tx = new THREE.TextureLoader().load(src, () => res(tx), undefined, () => res(tx)); tx.anisotropy = 8; });
+  const NOISE = `
+    float hash13(vec3 p){ p = fract(p * .1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+    float vnoise(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+      return mix(mix(mix(hash13(i), hash13(i + vec3(1,0,0)), f.x), mix(hash13(i + vec3(0,1,0)), hash13(i + vec3(1,1,0)), f.x), f.y),
+                 mix(mix(hash13(i + vec3(0,0,1)), hash13(i + vec3(1,0,1)), f.x), mix(hash13(i + vec3(0,1,1)), hash13(i + vec3(1,1,1)), f.x), f.y), f.z); }
+    float fbm(vec3 p){ float a = .5, s = 0.; for (int k = 0; k < 5; k++) { s += a * vnoise(p); p *= 2.03; a *= .5; } return s; }`;
+
+  // ---------- Elemente comune ----------
+  const sunDir = new THREE.Vector3(-.6, .45, .66).normalize();
+  const starField = (r, n) => { const p = new Float32Array(n * 3), s = new Float32Array(n), c = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const v = new THREE.Vector3(rand() - .5, rand() - .5, rand() - .5).normalize().multiplyScalar(r); p.set([v.x, v.y, v.z], i * 3); s[i] = Math.pow(rand(), 6) * 3 + .6;
+      const w = rand(); c.set(w < .2 ? [1, .85, .7] : w < .4 ? [.75, .85, 1] : [1, 1, 1], i * 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3)); g.setAttribute('aS', new THREE.BufferAttribute(s, 1)); g.setAttribute('aC', new THREE.BufferAttribute(c, 3));
+    const pts = new THREE.Points(g, new THREE.ShaderMaterial({ uniforms: { uPR: { value: PR } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: 'attribute float aS; attribute vec3 aC; uniform float uPR; varying vec3 vC; void main(){ vC = aC * (.6 + aS * .5); gl_PointSize = aS * uPR; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+      fragmentShader: 'varying vec3 vC; void main(){ float d = length(gl_PointCoord - .5); gl_FragColor = vec4(vC * smoothstep(.5, .0, d), 1.); }' })); pts.frustumCulled = false; return pts; };
+  const nebula = r => new THREE.Mesh(new THREE.SphereGeometry(r, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false,
+    vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `varying vec3 vD; ${NOISE} void main(){ float n = fbm(vD * 2.2 + 3.); float m = fbm(vD * 4.5 - 1.);
+      vec3 c = vec3(.004, .005, .012) + vec3(.05, .025, .09) * smoothstep(.45, .85, n) * m + vec3(.01, .035, .06) * smoothstep(.5, .9, m) * .8; gl_FragColor = vec4(c, 1.); }` }));
+  const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.1, 'rgba(255,250,235,1)'); g.addColorStop(.25, 'rgba(255,215,150,.35)'); g.addColorStop(1, 'rgba(255,180,90,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+  const glowS = (col, s) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); m.scale.setScalar(s); return m; };
+  const ptags = [];
+  const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: .5, metalness: .1, ...o });
+
+  const tagSprite = (txt, col = 'rgba(255,255,255,.92)') => { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const x = c.getContext('2d'); const draw = () => { x.clearRect(0, 0, 512, 96);
+    x.font = '800 44px Montserrat, Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = col; x.fillText(txt, 256, 48); }; draw();
+    const t = new THREE.CanvasTexture(c); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false, opacity: 0 })); s.userData.redraw = () => { draw(); t.needsUpdate = true; }; s.renderOrder = 20; return s; };
+  // ---------- Momentele cheie ----------
+  const T_D0 = S[1].start + .3, T_D1 = capT(1, /Bering/) + .6;          // primii 100 m
+  const T_DEEP0 = S[3].start, T_DEEP1 = capT(3, /Everestul/);           // tot oceanul se scurge
+  const T_EV = capT(3, /Everestul/) - .1;
+  const T_CL0 = capT(4, /Norii/) - .3, T_CL1 = SEND(4);                 // dispar norii
+  const T_RED0 = S[5].start, T_RED1 = SEND(5) + .3;                     // Pământul se înroșește
+  const T_MARS = S[6].start - .2, T_EARTH2 = S[7].start - .2;
+
+  // ---------- Adâncimea aproximativă a oceanului, din masca uscatului (canvas + blur) ----------
+  const depthCanvas = document.createElement('canvas'); depthCanvas.width = 1024; depthCanvas.height = 512;
+  const depthTex = new THREE.CanvasTexture(depthCanvas); depthTex.minFilter = THREE.LinearFilter;
+  function buildDepth(img) {
+    const W = 1024, H = 512, x = depthCanvas.getContext('2d'), acc = new Float32Array(W * H);
+    const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H; const tx = tmp.getContext('2d');
+    [[3, .35], [10, .3], [26, .22], [60, .13]].forEach(([r, w]) => { tx.clearRect(0, 0, W, H); tx.filter = `blur(${r}px)`; tx.drawImage(img, 0, 0, W, H); tx.filter = 'none';
+      const d = tx.getImageData(0, 0, W, H).data; for (let i = 0; i < W * H; i++) acc[i] += w * d[i * 4] / 255; });
+    const out = x.createImageData(W, H);
+    for (let i = 0; i < W * H; i++) { const v = Math.max(0, Math.min(1, 1 - acc[i] * 1.9)); out.data[i * 4] = out.data[i * 4 + 1] = out.data[i * 4 + 2] = Math.round(v * 255); out.data[i * 4 + 3] = 255; }
+    x.putImageData(out, 0, 0); depthTex.needsUpdate = true;
+  }
+
+  // ---------- SPAȚIUL: Pământul care se usucă, apoi Marte ----------
+  const SP = new THREE.Scene(); SP.add(nebula(300)); SP.add(starField(250, 2600));
+  const sun = glowS(new THREE.Color(6, 5.2, 4.2), 24); sun.position.copy(sunDir).multiplyScalar(110); SP.add(sun);
+  const EU = { tDay: { value: null }, tLand: { value: null }, tDepth: { value: depthTex }, uSea: { value: 0 }, uDry: { value: 0 }, uMars: { value: 0 }, uSun: { value: sunDir.clone() }, uTime: { value: 0 } };
+  const earthMat = new THREE.ShaderMaterial({ uniforms: EU,
+    vertexShader: 'varying vec2 vUv; varying vec3 vN, vW, vP; void main(){ vUv = uv; vP = position; vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: `uniform sampler2D tDay, tLand, tDepth; uniform vec3 uSun; uniform float uSea, uDry, uMars, uTime; varying vec2 vUv; varying vec3 vN, vW, vP; ${NOISE}
+      void main(){
+        vec3 day = pow(texture2D(tDay, vUv).rgb, vec3(2.2)); float land = smoothstep(.35, .65, texture2D(tLand, vUv).r);
+        float dp = texture2D(tDepth, vUv).r;                               // 0 = lângă coastă, 1 = ocean adânc
+        float ridge = 1. - smoothstep(.0, .06, abs(fbm(vP * 3.) - .5));      // dorsale submarine
+        float n = fbm(vP * 22.);
+        dp = clamp(dp + (n - .5) * .12 - ridge * .08, 0., 1.);
+        float dry = (1. - land) * smoothstep(dp - .015, dp + .015, uSea * 1.04);   // fundul scos la iveală
+        vec3 shelf = mix(vec3(.5, .43, .32), vec3(.36, .3, .24), smoothstep(.05, .35, dp));
+        vec3 abyss = mix(vec3(.2, .18, .17), vec3(.12, .11, .11), smoothstep(.6, 1., dp));
+        vec3 floorC = mix(shelf, abyss, smoothstep(.15, .55, dp)) * (.75 + .5 * n) + vec3(.28, .25, .2) * ridge * .6;
+        floorC = mix(floorC, floorC * vec3(1.15, .95, .85), uDry);
+        // apa rămasă e mai închisă în zonele adânci
+        vec3 water = mix(day, day * vec3(.55, .7, 1.), smoothstep(.2, .9, dp)) * (1. - .35 * uSea);
+        vec3 col = mix(water, floorC, dry);
+        // uscatul vechi: verdele dispare, apoi totul devine roșu ca Marte
+        float g = clamp(day.g - max(day.r, day.b), 0., 1.) * land;
+        col = mix(col, col + vec3(g * .9, g * .2, -g * .2) * .9, uDry);
+        float lum = dot(col, vec3(.3, .55, .15));
+        col = mix(col, vec3(.62, .3, .15) * (lum * 2.2 + .04) * (.8 + .35 * n), uMars);
+        vec3 nn = normalize(vN), L = normalize(uSun), V = normalize(cameraPosition - vW);
+        float lit = smoothstep(-.08, .3, dot(nn, L)); vec3 c = col * (.012 + 1.5 * lit);
+        float wet = (1. - land) * (1. - dry); c += vec3(1., .93, .8) * pow(max(dot(nn, normalize(V + L)), 0.), 380.) * wet * .7 * lit;
+        c += mix(vec3(.25, .5, 1.), vec3(.7, .35, .2), uMars) * pow(1. - max(dot(nn, V), 0.), 3.) * (.08 + .9 * lit) * (1. - .55 * uMars);
+        gl_FragColor = vec4(c, 1.); }` });
+  const earth = new THREE.Group(); SP.add(earth);
+  earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 192, 96), earthMat));
+  const cloudU = { uK: { value: 1 }, uSun: EU.uSun, uTime: EU.uTime };
+  const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.012, 128, 64), new THREE.ShaderMaterial({ uniforms: cloudU, transparent: true, depthWrite: false,
+    vertexShader: 'varying vec3 vP, vN; void main(){ vP = position; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `uniform float uK, uTime; uniform vec3 uSun; varying vec3 vP, vN; ${NOISE} void main(){ float n = fbm(vP * 6. + vec3(uTime * .01, 0., 0.)) * .6 + fbm(vP * 19.) * .4;
+      float a = smoothstep(.58, .8, n) * uK; float l = smoothstep(-.1, .35, dot(normalize(vN), normalize(uSun))); gl_FragColor = vec4(vec3(1.) * (.05 + 1.2 * l), a * .85); }` }));
+  earth.add(clouds);
+  const atmoU = { uSun: EU.uSun, uK: { value: 1 }, uMars: EU.uMars };
+  earth.add(new THREE.Mesh(new THREE.SphereGeometry(1.035, 96, 48), new THREE.ShaderMaterial({ uniforms: atmoU, side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: 'varying vec3 vN, vW; void main(){ vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: `uniform vec3 uSun; uniform float uK, uMars; varying vec3 vN, vW; void main(){ vec3 V = normalize(cameraPosition - vW); float r = 1. - abs(dot(normalize(vN), V));
+      float i = pow(r, 5.) * 2.2; float l = smoothstep(-.35, .4, dot(normalize(vN), normalize(uSun))); gl_FragColor = vec4(mix(vec3(.3, .6, 1.), vec3(.8, .45, .3), uMars) * i * l * uK * (1. - .6 * uMars), 1.); }` })));
+  // Marte, cu oceanul lui antic care dispare
+  const MU = { uSun: EU.uSun, uWater: { value: 1 } };
+  const mars = new THREE.Mesh(new THREE.SphereGeometry(1, 160, 80), new THREE.ShaderMaterial({ uniforms: MU,
+    vertexShader: 'varying vec3 vN, vW, vP; void main(){ vP = position; vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: `uniform vec3 uSun; uniform float uWater; varying vec3 vN, vW, vP; ${NOISE} void main(){
+      float n = fbm(vP * 3.5), m = fbm(vP * 14.); float h = n * .7 + m * .3 - vP.y * .18;
+      vec3 c = mix(vec3(.26, .09, .035), vec3(.55, .25, .11), n) * (.75 + .4 * m); c = mix(c, vec3(.92, .92, .95), smoothstep(.86, .93, abs(vP.y)));
+      float sea = smoothstep(h - .04, h + .04, .36 * uWater + .02) * step(.0001, uWater) * smoothstep(-.2, .15, vP.y);
+      c = mix(c, vec3(.015, .05, .12), sea * .9);
+      vec3 nn = normalize(vN), L = normalize(uSun), V = normalize(cameraPosition - vW); float lit = smoothstep(-.1, .35, dot(nn, L));
+      vec3 o = c * (.008 + .95 * lit); o += vec3(1., .9, .8) * pow(max(dot(nn, normalize(V + L)), 0.), 200.) * sea * .6 * lit;
+      o += vec3(.8, .5, .35) * pow(1. - max(dot(nn, V), 0.), 4.) * .35 * lit; gl_FragColor = vec4(o, 1.); }` }));
+  SP.add(mars); mars.visible = false;
+  const tags = { uk: tagSprite('MAREA BRITANIE + EUROPA'), bering: tagSprite('ASIA + AMERICA'), mariana: tagSprite('GROAPA MARIANELOR') };
+  Object.values(tags).forEach(s => { s.scale.set(.95, .178, 1); earth.add(s); ptags.push(s); });
+  const geo = (lat, lon, r = 1) => { const a = (lon + 180) / 360 * Math.PI * 2, t = (90 - lat) * Math.PI / 180; return new THREE.Vector3(-Math.cos(a) * Math.sin(t) * r, Math.cos(t) * r, Math.sin(a) * Math.sin(t) * r); };
+  tags.uk.position.copy(geo(56, 0, 1.18)); tags.bering.position.copy(geo(70, -170, 1.18)); tags.mariana.position.copy(geo(18, 143, 1.2));
+  const spinFor = lon => Math.PI / 2 - (lon + 180) / 360 * Math.PI * 2;
+
+  // ---------- PORTUL: apa s-a retras, vaporul zace în noroi ----------
+  const SEA = new THREE.Scene();
+  SEA.add(new THREE.Mesh(new THREE.SphereGeometry(4000, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: { uSun: { value: sunDir } },
+    vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `uniform vec3 uSun; varying vec3 vD; ${NOISE} void main(){ float h = max(vD.y, 0.); vec3 c = mix(vec3(.85, .78, .68), vec3(.16, .32, .62), pow(h, .42));
+      float s = max(dot(vD, normalize(uSun)), 0.); c += vec3(1., .82, .55) * (pow(s, 8.) * .45 + pow(s, 900.) * 40.);
+      vec2 q = vD.xz / (vD.y + .08); float cl = smoothstep(.6, .9, fbm(vec3(q * 1.2, 1.))) * smoothstep(.0, .15, vD.y); c = mix(c, vec3(1., .96, .9) * (.8 + .3 * s), cl * .7);
+      gl_FragColor = vec4(c, 1.); }` })));
+  const pSun = new THREE.DirectionalLight(0xffe9cc, 1.7); pSun.position.set(-60, 50, 70); pSun.castShadow = true; pSun.shadow.mapSize.set(2048, 2048);
+  Object.assign(pSun.shadow.camera, { left: -120, right: 120, top: 120, bottom: -120, near: 1, far: 400 }); SEA.add(pSun, new THREE.HemisphereLight(0xbcd4ff, 0x4a3a28, .5));
+  // fundul mării: noroi ud care coboară spre larg, cu bălți care reflectă cerul
+  const mudM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .85, metalness: 0 });
+  mudM.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWp;\n' + NOISE)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        vec2 q = position.xz; float slope = clamp((q.x + 20.) / 260., 0., 1.); transformed.y += -slope * 16. + (fbm(vec3(q * .03, 1.)) - .5) * 3.5 + (vnoise(vec3(q * .2, 2.)) - .5) * .5; vWp = transformed;`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vWp;\n' + NOISE).replace('#include <color_fragment>', `#include <color_fragment>
+      { float n = fbm(vec3(vWp.xz * .08, 3.)), m = vnoise(vec3(vWp.xz * .9, 4.)); vec3 mud = mix(vec3(.11, .09, .06), vec3(.27, .21, .14), n) * (.8 + .3 * m);
+        float pud = smoothstep(.58, .62, fbm(vec3(vWp.xz * .05, 7.))); mud = mix(mud, vec3(.25, .33, .42), pud * .8); diffuseColor.rgb = mud; }`)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(.9, .12, smoothstep(.58, .62, fbm(vec3(vWp.xz * .05, 7.))));'); };
+  { const g = new THREE.PlaneGeometry(900, 700, 200, 160).rotateX(-Math.PI / 2); const m = new THREE.Mesh(g, mudM); m.position.set(320, -2, 0); m.receiveShadow = true; SEA.add(m); }
+  // marea care s-a retras, departe, la orizont
+  const farSea = new THREE.Mesh(new THREE.PlaneGeometry(4000, 3000), new THREE.MeshStandardMaterial({ color: 0x16384f, roughness: .15, metalness: .2 })); farSea.rotation.x = -Math.PI / 2; farSea.position.set(2400, -17.5, 0); SEA.add(farSea);
+  // cheiul, macaralele, containerele
+  const concrete = std('#a39e94', { roughness: .9 }), rust = std('#8a3b1e', { roughness: .7 }), steelY = std('#e3b21c', { roughness: .5 });
+  { const quay = new THREE.Mesh(new THREE.BoxGeometry(60, 10, 420), concrete); quay.position.set(-50, -1, 0); quay.receiveShadow = quay.castShadow = true; SEA.add(quay);
+    for (const z of [-90, -10, 70]) { const c = new THREE.Group(); c.position.set(-34, 4, z); SEA.add(c);
+      for (const [x, zz] of [[-6, -6], [6, -6], [-6, 6], [6, 6]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(1.4, 34, 1.4).translate(0, 17, 0), steelY); l.position.set(x, 0, zz); l.castShadow = true; c.add(l); }
+      const top = new THREE.Mesh(new THREE.BoxGeometry(62, 3, 4).translate(18, 35, 0), steelY); top.castShadow = true; c.add(top); }
+    const cols = ['#b5432d', '#2d6bb5', '#2f8a4e', '#c79a2a', '#7a7f87'];
+    for (let k = 0; k < 40; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(6, 2.6, 2.5), std(cols[k % 5], { roughness: .6 })); b.position.set(-60 + (k % 4) * 6.6, 5.3 + Math.floor(k / 20) * 2.6, -150 + (k % 20) * 3 * 2.4); b.castShadow = true; SEA.add(b); } }
+  function makeShip() {
+    const g = new THREE.Group();
+    const sh = new THREE.Shape(); sh.moveTo(-70, 9); sh.lineTo(66, 9); sh.quadraticCurveTo(80, 9, 84, 13); sh.lineTo(70, -5); sh.quadraticCurveTo(0, -9, -66, -5); sh.lineTo(-72, 3); sh.lineTo(-70, 9);
+    const hull = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 24, bevelEnabled: true, bevelSize: 2, bevelThickness: 2, curveSegments: 12 }).translate(0, 0, -12), rust); hull.castShadow = true; g.add(hull);
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(146, 1, 26), std('#3d4a3a')); deck.position.set(0, 9.6, 0); g.add(deck);
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(16, 18, 24), std('#bdb8ae')); bridge.position.set(-55, 19, 0); bridge.castShadow = true; g.add(bridge);
+    const win = new THREE.Mesh(new THREE.BoxGeometry(16.2, 2.4, 24.2), std('#1d2733', { roughness: .2 })); win.position.set(-55, 25, 0); g.add(win);
+    const funnel = new THREE.Mesh(new THREE.CylinderGeometry(3, 3.4, 10, 20), std('#1d1f24')); funnel.position.set(-62, 32, 0); g.add(funnel);
+    const ccols = ['#b5432d', '#2d6bb5', '#2f8a4e', '#c79a2a'];
+    for (let k = 0; k < 36; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(11, 5, 4.6), std(ccols[k % 4], { roughness: .6 })); b.position.set(-30 + (k % 9) * 12, 12.6 + Math.floor(k / 18) * 5, -7.5 + (Math.floor(k / 9) % 2) * 15); b.castShadow = true; g.add(b); }
+    return g;
+  }
+  const ship = makeShip(); ship.position.set(90, -8.5, -30); ship.rotation.set(.18, .5, -.1); SEA.add(ship);
+  const boat = makeShip(); boat.scale.setScalar(.35); boat.position.set(40, -4.5, 60); boat.rotation.set(-.25, -.9, .05); SEA.add(boat);
+  // pescăruși (puncte închise care planează)
+  const gulls = []; for (let k = 0; k < 9; k++) { const m = new THREE.Mesh(new THREE.ConeGeometry(.5, 3, 3).rotateZ(Math.PI / 2).scale(1, .3, 3), std('#f2f2f2')); SEA.add(m); gulls.push({ m, r: 30 + Math.random() * 40, h: 30 + Math.random() * 20, ph: Math.random() * 6, sp: .2 + Math.random() * .2 }); }
+
+  // ---------- Starea scenelor ----------
+  const sph = (r, az, el) => new THREE.Vector3(Math.cos(el) * Math.sin(az) * r, Math.sin(el) * r, Math.cos(el) * Math.cos(az) * r);
+  const camKeys = [   // [timp, distanță, latitudine, longitudine]
+    [0, 3.7, 18, 0], [S[1].start, 3.3, 30, 0], [capT(1, /Britanie/), 2.15, 52, 2], [capT(1, /Asia/) - .2, 2.3, 55, -40], [capT(1, /Bering/), 2.2, 62, -168],
+    [S[3].start, 2.6, 20, 150], [T_EV, 2.35, 16, 145], [SEND(3), 3.3, 12, 120], [S[4].start, 3.3, 15, 30], [SEND(4), 3.5, 18, 5], [SEND(5), 3.7, 20, -30], [S[7].start, 3.6, 18, 10], [TOTAL, 3.9, 18, 40]];
+  const camAt = t => { let k = 0; while (k < camKeys.length - 2 && t >= camKeys[k + 1][0]) k++; const A0 = camKeys[k], B0 = camKeys[k + 1]; const u = eio((t - A0[0]) / Math.max(.001, B0[0] - A0[0]));
+    return A0.slice(1).map((v, j) => lerp(v, B0[j + 1], u)); };
+  const viewAt = t => t >= S[2].start - GAP / 2 && t < S[3].start - GAP / 2 ? 'port' : 'space';
+  function updateSpace(t) {
+    EU.uTime.value = t;
+    EU.uSea.value = lerp(0, .14, ss(T_D0, T_D1, t)) + (1 - .14) * eio(ss(T_DEEP0, T_DEEP1, t));
+    EU.uDry.value = ss(S[4].start, SEND(4), t);
+    EU.uMars.value = ss(T_RED0, T_RED1, t);
+    cloudU.uK.value = 1 - ss(T_CL0, T_CL1, t);
+    atmoU.uK.value = 1 - .4 * ss(T_CL0, T_RED1, t);
+    const onMars = t >= T_MARS && t < T_EARTH2;
+    mars.visible = onMars; earth.visible = !onMars;
+    MU.uWater.value = 1 - ss(capT(6, /pierdut/) - .6, SEND(6) + .1, t);
+    const [dist, lat, lon] = camAt(t);
+    earth.rotation.y = spinFor(lon); mars.rotation.y = t * .05;
+    const cp = sph(onMars ? 3.2 : dist, 0, lat * Math.PI / 180 * (onMars ? .3 : 1)); camera.position.copy(cp); camera.up.set(0, 1, 0); camera.lookAt(0, 0, 0); camera.fov = 42; camera.near = .02; camera.far = 400; camera.updateProjectionMatrix();
+    EU.uSun.value.copy(new THREE.Vector3(-.55, .45, .7).normalize().applyAxisAngle(new THREE.Vector3(1, 0, 0), -lat * Math.PI / 360));
+    const show = (s, a, b) => { const k = ss(a, a + .4, t) * (1 - ss(b - .3, b, t)); s.material.opacity = k; s.visible = k > .01; };
+    show(tags.uk, capT(1, /Britanie/), capT(1, /Asia/) - .1); show(tags.bering, capT(1, /Bering/) - .3, S[2].start - .2); tags.mariana.visible = false;
+    return SP;
+  }
+  function updatePort(t) {
+    const u = ss(S[2].start - .3, S[3].start, t);
+    camera.position.set(lerp(-46, -40, u), lerp(24, 22, u), lerp(110, 96, u)); camera.up.set(0, 1, 0); camera.lookAt(70, -6, -10); camera.fov = 46; camera.near = .5; camera.far = 9000; camera.updateProjectionMatrix();
+    gulls.forEach(g => { const a = t * g.sp + g.ph; g.m.position.set(40 + Math.cos(a) * g.r, g.h + Math.sin(a * 2) * 2, Math.sin(a) * g.r); g.m.rotation.set(0, -a, Math.sin(a * 3) * .3); });
+    return SEA;
+  }
+  // ---------- Text: titlu, HUD, „slam"-uri, subtitrări ----------
+  const capEl = $('cap'), titleEl = $('title'), hud = $('hud'), hL = $('hL'), hV = $('hV'), slamEl = $('slam'), slamBig = $('slamBig'), slamSub = $('slamSub'), endcard = $('endcard'), fadeEl = $('fade'), flashEl = $('flash');
+  const SLAMS = [
+    [capT(1, /Britanie/) - .1, capT(1, /Asia/) - .05, '−100 M', 'și ajungi pe jos din Anglia în Franța', 'sky'],
+    [capT(1, /Bering/) - .1, S[2].start - .1, 'BERINGIA', 'podul de uscat dintre Asia și America', 'sky'],
+    [capT(2, /noroi/) - .1, S[3].start - .1, 'PE USCAT', 'porturi și vapoare', 'warm'],
+    [capT(4, /plouă/) - .05, S[5].start - .1, '0 MM', 'de ploaie, peste tot', 'warm'],
+    [capT(5, /Marte/) - .05, S[6].start - .1, 'CA MARTE', 'roșu, uscat, pustiu', 'warm'],
+    [capT(6, /miliarde/) - .1, S[7].start - .1, '3,5+ MLD. ANI', 'de când Marte avea râuri și lacuri', 'sky']
+  ];
+  let curSlam = -1, curCap = -1;
+  function updateText(t) {
+    const i = segAt(t);
+    titleEl.style.opacity = ss(.1, .5, t) * (1 - ss(S[1].start - .4, S[1].start, t));
+    titleEl.style.transform = `translateY(${(1 - eout(t / .8)) * 3}cqw) scale(${1 + t * .01})`;
+    let h = null;
+    if (t >= S[1].start && t < S[4].start - .2) { const lvl = Math.round((lerp(0, 100, ss(T_D0, T_D1, t)) + 10900 * eio(ss(T_DEEP0, T_DEEP1, t))) / 10) * 10; h = ['NIVELUL MĂRII', (lvl ? '−' : '') + lvl.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' m']; }
+    hud.style.opacity = h ? ss(S[1].start, S[1].start + .4, t) * (1 - ss(S[4].start - .5, S[4].start - .2, t)) : 0;
+    // schema groapei Marianelor
+    const tk = ss(capT(3, /adâncă/) - .2, capT(3, /adâncă/) + .3, t) * (1 - ss(SEND(3) + .1, S[4].start, t));
+    $('trench').style.opacity = tk; $('trench').style.transform = `translateY(${(1 - tk) * 3}cqw)`;
+    $('tLine').style.strokeDashoffset = (700 * (1 - ss(capT(3, /adâncă/), capT(3, /unsprezece/) + .4, t))).toFixed(0);
+    const ek = ss(T_EV, T_EV + .6, t); $('tEv').setAttribute('opacity', ek.toFixed(2)); $('tEv').setAttribute('transform', `translate(0,${((1 - eout(ek)) * -60).toFixed(1)})`);
+    $('tEvT').setAttribute('opacity', ek.toFixed(2)); $('tEvT2').setAttribute('opacity', ek.toFixed(2)); if (h) { hL.textContent = h[0]; hV.textContent = h[1]; }
+    let si = -1; SLAMS.forEach((s, k) => { if (t >= s[0] && t < s[1]) si = k; });
+    if (si !== curSlam) { curSlam = si; if (si >= 0) { const s = SLAMS[si]; slamEl.className = 'slam ' + s[4]; slamBig.textContent = s[2]; slamSub.textContent = s[3]; slamBig.style.fontSize = Math.min(17, 78 / (s[2].length * .5)).toFixed(1) + 'cqw'; } }
+    if (si >= 0) { const s = SLAMS[si], a = t - s[0], out = s[1] - t; const k = eout(a / .35);
+      slamEl.style.opacity = clamp(a / .2) * clamp(out / .2); slamEl.style.transform = `translateY(${(1 - k) * 3}cqw) scale(${lerp(.92, 1, k)})`; slamSub.style.opacity = clamp((a - .15) / .2); }
+    else slamEl.style.opacity = 0;
+    let si2 = -1, ci = -1;
+    for (let k = 0; k < S.length; k++) if (t >= S[k].start && t < SEND(k) + .3) { si2 = k; S[k].caps.forEach((c, j) => { if (t >= S[k].start + c[0] - .02) ci = j; }); }
+    const key = si2 * 100 + ci;
+    if (key !== curCap) { curCap = key; capEl.innerHTML = si2 >= 0 && ci >= 0 ? S[si2].caps[ci][1].replace(/\*(.+?)\*/g, '<span class="hl">$1</span>') : ''; }
+    if (si2 >= 0 && ci >= 0) { const a = t - (S[si2].start + S[si2].caps[ci][0]); const k = eout(a / .14); capEl.style.transform = `translateY(${(1 - k) * 1.4}cqw)`; capEl.style.opacity = k; }
+    capEl.style.visibility = t > END + .2 ? 'hidden' : 'visible';
+    endcard.style.opacity = ss(END + .2, END + .8, t);
+    let f = 0; for (const c of CUTS) f = Math.max(f, 1 - Math.abs(t - c) / .22);
+    fadeEl.style.opacity = Math.max(clamp(f) * .95, RENDER ? 0 : 1 - ss(0, .4, t), ss(TOTAL - .6, TOTAL, t));
+    flashEl.style.opacity = 0;
+  }
+
+  // ---------- Sunet: voce + efecte + muzică ElevenLabs (aceeași listă e folosită la exportul MP4) ----------
+  const CUES = [];
+  {
+    const X = (at, name, gain, o = {}) => CUES.push({ at: Math.max(0, at), name, gain, fadeIn: o.fi ?? .08, fadeOut: o.fo ?? .6, dur: o.dur ?? null, offset: o.off ?? 0 });
+    X(0, 'ocean', .5, { fi: .2, dur: S[1].start + 1.5, fo: 1.2 });
+    X(T_D0 - .3, 'water', .5, { fi: .3, dur: T_D1 - T_D0 + 1.2, fo: 1 });
+    X(S[1].start + .5, 'space', .35, { fi: 1, dur: S[2].start - S[1].start, fo: .4 });
+    X(S[2].start - .25, 'whoosh', .28, { fo: .4 });
+    X(S[2].start, 'wind', .42, { fi: .3, dur: S[3].start - S[2].start + .2, fo: .3 });
+    X(S[2].start + .3, 'creak', .45, { fi: .2, fo: .8 });
+    X(S[3].start - .25, 'whoosh', .28, { fo: .4 });
+    X(S[3].start, 'tension', .3, { fi: 1, dur: S[5].start - S[3].start, fo: 1 });
+    X(T_DEEP0, 'water', .45, { fi: .4, off: 1, dur: 5, fo: 1.5 });
+    X(T_EV - .05, 'boom', .45, { fi: .01, fo: 1.2 });
+    X(S[4].start, 'wind', .35, { fi: .6, off: 2, dur: S[6].start - S[4].start, fo: .8 });
+    X(S[6].start - .25, 'whoosh', .28, { fo: .4 });
+    X(S[6].start, 'micro', .35, { fi: .3, fo: 1 });
+    X(S[6].start + .4, 'epic', .48, { fi: 1.2, dur: TOTAL - S[6].start - .4, fo: 1.8 });
+  }
+  const DUCK = .6;
+  window.__cues = { voice: S.map((s, i) => ({ at: s.start, i })), sfx: CUES, duck: S.map((s, i) => [s.start - .1, SEND(i) + .15]), duckGain: DUCK, total: TOTAL, sfxGain: .9, voiceGain: 1 };
+  let ac = null, master, voiceBus, sfxBus, duckG, buffers = [], SFXB = {}, decoding = null;
+  const live = [];
+  function setupAudio() {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    ac = new AC();
+    master = ac.createGain(); master.gain.value = .9; master.connect(ac.destination);
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -10; comp.ratio.value = 3; comp.connect(master);
+    voiceBus = ac.createGain(); voiceBus.connect(comp);
+    duckG = ac.createGain(); duckG.connect(comp); sfxBus = ac.createGain(); sfxBus.gain.value = .9; sfxBus.connect(duckG);
+    const b64 = s => { const bin = atob(s), u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k); return u.buffer; };
+    const dec = ab => new Promise((res, rej) => { const p = ac.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+    decoding = Promise.all([Promise.all(AUDIO.map(s => dec(b64(s)))).then(b => { buffers = b; }), ...Object.entries(SFX).map(([k, v]) => dec(b64(v)).then(b => { SFXB[k] = b; }))]);
+    return decoding;
+  }
+  let t0 = 0;
+  function startAudio() {
+    live.splice(0).forEach(o => { try { o.stop(); } catch (e) {} });
+    t0 = ac.currentTime + .15;
+    buffers.forEach((b, i) => { const s = ac.createBufferSource(); s.buffer = b; s.connect(voiceBus); s.start(t0 + S[i].start); live.push(s); });
+    for (const c of CUES) { const b = SFXB[c.name]; if (!b) continue;
+      const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = b; const dur = Math.min(c.dur ?? 1e9, b.duration - c.offset), at = t0 + c.at;
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(c.gain, at + c.fadeIn); g.gain.setValueAtTime(c.gain, Math.max(at + c.fadeIn, at + dur - c.fadeOut)); g.gain.linearRampToValueAtTime(0, at + dur);
+      s.connect(g); g.connect(sfxBus); s.start(at, c.offset, dur + .02); live.push(s); }
+    const dg = duckG.gain; dg.cancelScheduledValues(0); dg.setValueAtTime(1, t0);
+    for (const [a, b] of window.__cues.duck) { dg.setTargetAtTime(DUCK, t0 + a, .05); dg.setTargetAtTime(1, t0 + b, .12); }
+  }
+  let keepAlive = null;
+  function iosUnmute() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    if (keepAlive) { keepAlive.play().catch(() => {}); return; }
+    const sr = 8000, n = sr / 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const w = (o, s) => [...s].forEach((c, k) => v.setUint8(o + k, c.charCodeAt(0)));
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    keepAlive = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); keepAlive.play().catch(() => {});
+  }
+
+  // ---------- Redare ----------
+  let moonTex = null;
+  const fontsReady = Promise.race([Promise.all(['400 60px Anton', '900 60px Montserrat', '800 40px Montserrat'].map(f => document.fonts.load(f))), new Promise(r => setTimeout(r, 5000))]).catch(() => {})
+    .then(() => ptags.forEach(s => s.userData.redraw()));
+  const texReady = Promise.all([loadTex(EARTH), loadTex(LANDM)]).then(([e, l]) => { EU.tDay.value = e; EU.tLand.value = l; buildDepth(l.image); });
+  function render3D(t) {
+    if (viewAt(t) === 'port') present([[updatePort(t), camera]], t, .45, .85);
+    else present([[updateSpace(t), camera]], t, 1.0, 1.15);
+  }
+  function renderAt(t) { render3D(t); updateText(t); }
+  const assets = Promise.all([fontsReady, texReady]);
+  if (RENDER) {
+    $('start').hidden = true;
+    window.__ready = assets.then(() => { renderAt(0); renderAt(S[2].start + 1); renderAt(S[3].start + 1); renderAt(S[6].start + 1); return { total: TOTAL }; });
+    window.__frame = t => { renderAt(t); return true; };
+    return;
+  }
+  const startEl = $('start'), pausedEl = $('paused'), endEl = $('end'), playBtn = $('playBtn'), sndBtn = $('snd');
+  let state = 'idle', fallbackT = 0, fallbackFrom = 0, muted = false;
+  const now = () => performance.now() / 1000;
+  const getT = () => { if (state === 'idle') return 0; if (ac && buffers.length) return Math.max(0, ac.currentTime - t0); return fallbackT + (state === 'playing' ? now() - fallbackFrom : 0); };
+  setupAudio();
+  Promise.all([assets, decoding || Promise.resolve()]).catch(() => {}).then(() => { playBtn.classList.remove('busy'); $('startHint').textContent = 'Cu sunet · ' + Math.floor(TOTAL / 60) + ':' + String(Math.round(TOTAL % 60)).padStart(2, '0'); });
+  function play() {
+    if (playBtn.classList.contains('busy')) return;
+    iosUnmute(); startEl.hidden = true; endEl.hidden = true; sndBtn.hidden = false; curCap = curSlam = -2;
+    if (ac) { ac.resume(); if (buffers.length) startAudio(); }
+    fallbackT = 0; fallbackFrom = now(); state = 'playing';
+  }
+  function pause() { if (state !== 'playing') return; state = 'paused'; fallbackT += now() - fallbackFrom; if (ac) ac.suspend(); pausedEl.hidden = false; }
+  function resume() { if (state !== 'paused') return; pausedEl.hidden = true; fallbackFrom = now(); state = 'playing'; iosUnmute(); if (ac) ac.resume(); }
+  function finish() { state = 'ended'; endEl.hidden = false; endEl.style.opacity = 1; sndBtn.hidden = true; }
+  playBtn.addEventListener('click', e => { e.stopPropagation(); play(); });
+  startEl.addEventListener('click', e => { e.stopPropagation(); play(); });
+  $('againBtn').addEventListener('click', e => { e.stopPropagation(); play(); });
+  pausedEl.addEventListener('click', e => { e.stopPropagation(); resume(); });
+  stage.addEventListener('click', e => { if (state === 'playing' && !e.target.closest('.snd')) pause(); });
+  sndBtn.addEventListener('click', e => { e.stopPropagation(); muted = !muted; if (master) master.gain.setTargetAtTime(muted ? 0 : .9, ac.currentTime, .05);
+    $('sndOn').hidden = muted; $('sndOff').hidden = !muted; sndBtn.setAttribute('aria-label', muted ? 'Pornește sunetul' : 'Oprește sunetul'); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+  function frame(ms) {
+    let t = getT();
+    if (state === 'playing' && t >= TOTAL) finish();
+    if (state === 'ended') t = TOTAL;
+    if (state === 'playing' && t >= END + 1.2) { endEl.hidden = false; endEl.style.opacity = ss(END + 1.2, END + 1.9, t); }
+    if (state === 'idle') { render3D(1.2 + (ms / 1000) % 2); } else renderAt(t);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
