@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Everest 3D</title>
+<style>
+  @font-face { font-family: 'Cap'; src: url('node_modules/@fontsource/montserrat/files/montserrat-latin-700-normal.woff2') format('woff2'); font-weight: 700; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: 'Cap'; src: url('node_modules/@fontsource/montserrat/files/montserrat-latin-ext-700-normal.woff2') format('woff2'); font-weight: 700; unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; width: 720px; height: 1280px; }
+  canvas { display: block; }
+  #cap {
+    position: absolute; left: 0; right: 0; top: 968px; text-align: center;
+    font: 700 46px/1.1 'Cap', sans-serif; color: #fff; letter-spacing: -0.3px;
+    text-shadow: 0 0 2px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.55), 0 0 22px rgba(0,0,0,.25);
+    -webkit-text-stroke: 0.6px rgba(0,0,0,.25);
+  }
+  #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+  #hud { position: fixed; left: 730px; top: 10px; color: #aaa; font: 13px monospace; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./node_modules/three/build/three.module.js",
+  "three/addons/": "./node_modules/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="stage"><div id="fade"></div><div id="cap"></div></div>
+<div id="hud"></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
