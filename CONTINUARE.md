@@ -34,3 +34,9 @@ Toate videourile sunt în rădăcina repo-ului (`*.html`, `*.mp4`, `*-descriere.
 - `render.js pagina.html outdir fps start end` — cadre JPEG. **Rapid (recomandat):** `DPR=1` (540×960, mărit la 1080×1920 de ffmpeg), 25 fps, 2 procese în paralel: ~75 cadre/min, adică ~20 min pentru 1 minut de video. Mai multe procese nu ajută, SwiftShader folosește deja toate nucleele. Contează mult numărul de triunghiuri (umbrele le desenează de două ori): coroanele copacilor au `SphereGeometry(1, 8, 6)`. Fără `DPR` se randează la 1080×1920 nativ, de ~2,5 ori mai lent.
 - Testele vizuale cu `snap.js` se fac la `DPR=1` și cât mai puține; nu le rula în timpul randării finale.
 - `mix.py cues.json audio out.wav` — mixaj offline identic cu pagina (fade-uri, ducking sub voce). Apoi `ffmpeg -framerate 25 -i f%05d.jpg -i mix.wav -vf scale=1080:1920:flags=lanczos,unsharp=5:5:0.6 -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:v libx264 -preset slow -b:v 5000k -maxrate 7000k -bufsize 10000k -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 192k -ar 48000 -shortest out.mp4` (5 Mbps ține fișierul sub ~40 MB pentru GitHub).
+
+## Skill-ul /zach-d-films (instalat în repo)
+- Sursa: github.com/artemnovitckii/claude-animation-skills (MIT), copiat în `.claude/skills/zach-d-films/`, cu kit-ul comun în `.claude/kit/`. Face explicații 3D cartoon (oameni și obiecte procedurale în three.js, impacturi cu încetinitorul, tăieturi rapide).
+- Într-o sesiune nouă: `cd .claude/kit && npm install --no-audit --no-fund --ignore-scripts` (fără `playwright install`), apoi randezi cu Chromium-ul sesiunii:
+  `GL=swiftshader CHROME_PATH=$(ls -d /opt/pw-browsers/chromium-*/chrome-linux*/chrome | head -1) node render.mjs stills 2,9,20 stills` (testat: ~4–7 s pe cadru la 720×1280).
+- Vocea: păstrăm Chris prin conectorul ElevenLabs și subtitrările românești (`unelte/aliniere.py`); din skill folosim motorul 3D (`human.js`, `props.js`, `shots.js`). Eroarea 404 la stills vine din lipsa `audio.m4a` și e inofensivă.
