@@ -1,0 +1,211 @@
+{
+ "voice": [
+  {
+   "at": 0.3,
+   "i": 0
+  },
+  {
+   "at": 3.818,
+   "i": 1
+  },
+  {
+   "at": 5.947,
+   "i": 2
+  },
+  {
+   "at": 12.012,
+   "i": 3
+  },
+  {
+   "at": 18.209,
+   "i": 4
+  },
+  {
+   "at": 25.681,
+   "i": 5
+  },
+  {
+   "at": 33.348,
+   "i": 6
+  },
+  {
+   "at": 38.53,
+   "i": 7
+  }
+ ],
+ "sfx": [
+  {
+   "at": 0,
+   "name": "jet",
+   "gain": 0.35,
+   "fadeIn": 0.3,
+   "fadeOut": 0.4,
+   "dur": 1.6,
+   "offset": 0
+  },
+  {
+   "at": 1.5,
+   "name": "hum",
+   "gain": 0.3,
+   "fadeIn": 0.2,
+   "fadeOut": 0.4,
+   "dur": 2.318,
+   "offset": 0
+  },
+  {
+   "at": 3.918,
+   "name": "boom",
+   "gain": 0.4,
+   "fadeIn": 0.01,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 3.968,
+   "name": "wind",
+   "gain": 0.6,
+   "fadeIn": 0.05,
+   "fadeOut": 0.4,
+   "dur": 2.029,
+   "offset": 2
+  },
+  {
+   "at": 5.947,
+   "name": "hum",
+   "gain": 0.28,
+   "fadeIn": 0.3,
+   "fadeOut": 0.5,
+   "dur": 12.262,
+   "offset": 0
+  },
+  {
+   "at": 8.347,
+   "name": "tension",
+   "gain": 0.25,
+   "fadeIn": 0.5,
+   "fadeOut": 0.6,
+   "dur": 9.862,
+   "offset": 0
+  },
+  {
+   "at": 18.659,
+   "name": "glass",
+   "gain": 0.45,
+   "fadeIn": 0.01,
+   "fadeOut": 0.8,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 18.909,
+   "name": "wind",
+   "gain": 0.35,
+   "fadeIn": 0.2,
+   "fadeOut": 0.8,
+   "dur": 3.5,
+   "offset": 3
+  },
+  {
+   "at": 25.631,
+   "name": "micro",
+   "gain": 0.35,
+   "fadeIn": 0.2,
+   "fadeOut": 1,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 25.881,
+   "name": "jet",
+   "gain": 0.4,
+   "fadeIn": 0.4,
+   "fadeOut": 0.6,
+   "dur": 7.466999999999998,
+   "offset": 0
+  },
+  {
+   "at": 29.381,
+   "name": "boom",
+   "gain": 0.45,
+   "fadeIn": 0.01,
+   "fadeOut": 1.2,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 29.431,
+   "name": "wind",
+   "gain": 0.55,
+   "fadeIn": 0.05,
+   "fadeOut": 0.6,
+   "dur": 3.866999999999998,
+   "offset": 1
+  },
+  {
+   "at": 33.348,
+   "name": "wind",
+   "gain": 0.45,
+   "fadeIn": 0.1,
+   "fadeOut": 0.5,
+   "dur": 2.9,
+   "offset": 4
+  },
+  {
+   "at": 33.748,
+   "name": "epic",
+   "gain": 0.45,
+   "fadeIn": 1.2,
+   "fadeOut": 1.8,
+   "dur": 7.682,
+   "offset": 0
+  },
+  {
+   "at": 37.248,
+   "name": "boom",
+   "gain": 0.22,
+   "fadeIn": 0.01,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  }
+ ],
+ "duck": [
+  [
+   0.19999999999999998,
+   3.618
+  ],
+  [
+   3.718,
+   5.747
+  ],
+  [
+   5.847,
+   11.812
+  ],
+  [
+   11.912,
+   18.009
+  ],
+  [
+   18.108999999999998,
+   25.480999999999998
+  ],
+  [
+   25.581,
+   33.148
+  ],
+  [
+   33.248,
+   38.33
+  ],
+  [
+   38.43,
+   39.978
+  ]
+ ],
+ "duckGain": 0.55,
+ "total": 41.43,
+ "sfxGain": 0.9,
+ "voiceGain": 1
+}
