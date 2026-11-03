@@ -356,7 +356,7 @@
       const tw = earth.localToWorld(IMPD.clone()); const u = eio(ss(S[5].start - .3, S[6].start - .5, t));
       EU.uMark.value = ss(capT(5, /66/) - .3, capT(5, /66/) + .3, t);
       setCam(tw.clone().multiplyScalar(lerp(3.4, 1.45, u)).add(new THREE.Vector3(0, -.05, 0)), tw.clone().multiplyScalar(lerp(.2, .95, u)), 40);
-      showTag(tags.chx, t, capT(5, /66/) - .2, S[6].start - .2, tw.clone().multiplyScalar(1.06).add(new THREE.Vector3(0, .035, 0)), lerp(1.2, .3, u));
+      showTag(tags.chx, t, capT(5, /66/) - .2, S[6].start - .2, tw.clone().multiplyScalar(1.03).add(new THREE.Vector3(0, .03, 0)), lerp(.9, .14, u));
     } else if (v === 'dart') {   // DART lovește Dimorphos
       const lt = t - S[6].start, hitT = T_DART - S[6].start, it = lt - hitT;
       didy.visible = dimo.visible = orbitLine.visible = true;
@@ -469,7 +469,7 @@
       const z = new THREE.Vector3().subVectors(new THREE.Vector3(0, 1.65, 0), trail.position).normalize(), x = new THREE.Vector3().crossVectors(up, z).normalize(), y = new THREE.Vector3().crossVectors(z, x);
       trail.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
       SKU.uF.value.copy(dir); SKU.uFK.value = .5 + 1.2 * u; gFire.position.copy(dir).multiplyScalar(300); gFire.intensity = 2.5 * u * u; gFire.color.setRGB(1, .82, .62);
-      flash = ss(.8, 1, u) * 1.2; shake = u * u * 2;
+      flash = ss(.9, 1, u) * .8; shake = u * u * 2;
     } else if (key === 'shock') {   // la orizont crește domul de foc, cerul se înroșește, vine peretele de praf
       const lt = t - S[3].start, dDir = dirAE(118, 0);
       SKU.uDome.value.copy(dDir); SKU.uDK.value = ss(0, 1.2, lt); SKU.uOr.value = ss(1.5, 5.5, lt) * .85;
