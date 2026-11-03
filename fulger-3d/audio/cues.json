@@ -1,0 +1,337 @@
+{
+ "voice": [
+  {
+   "at": 0.3,
+   "i": 0
+  },
+  {
+   "at": 2.211,
+   "i": 1
+  },
+  {
+   "at": 5.341,
+   "i": 2
+  },
+  {
+   "at": 9.731,
+   "i": 3
+  },
+  {
+   "at": 17.215,
+   "i": 4
+  },
+  {
+   "at": 21.768,
+   "i": 5
+  },
+  {
+   "at": 29.604,
+   "i": 6
+  },
+  {
+   "at": 37.212,
+   "i": 7
+  }
+ ],
+ "sfx": [
+  {
+   "at": 0,
+   "name": "rain",
+   "gain": 0.45,
+   "fadeIn": 0.3,
+   "fadeOut": 0.6,
+   "dur": 21.568,
+   "offset": 0
+  },
+  {
+   "at": 0.9,
+   "name": "rumble",
+   "gain": 0.35,
+   "fadeIn": 0.05,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 2.761,
+   "name": "crack",
+   "gain": 0.55,
+   "fadeIn": 0.01,
+   "fadeOut": 0.6,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 2.811,
+   "name": "boom",
+   "gain": 0.45,
+   "fadeIn": 0.01,
+   "fadeOut": 1.2,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 5.441,
+   "name": "micro",
+   "gain": 0.25,
+   "fadeIn": 0.2,
+   "fadeOut": 0.8,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 10.231,
+   "name": "tension",
+   "gain": 0.3,
+   "fadeIn": 0.4,
+   "fadeOut": 0.6,
+   "dur": 7.084,
+   "offset": 0
+  },
+  {
+   "at": 12.131,
+   "name": "power",
+   "gain": 0.4,
+   "fadeIn": 0.05,
+   "fadeOut": 0.8,
+   "dur": 3,
+   "offset": 0
+  },
+  {
+   "at": 12.131,
+   "name": "crack",
+   "gain": 0.45,
+   "fadeIn": 0.01,
+   "fadeOut": 0.6,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 17.215,
+   "name": "heart",
+   "gain": 0.45,
+   "fadeIn": 0.1,
+   "fadeOut": 0.6,
+   "dur": 4.553000000000001,
+   "offset": 0
+  },
+  {
+   "at": 21.768,
+   "name": "rain",
+   "gain": 0.4,
+   "fadeIn": 0.4,
+   "fadeOut": 0.6,
+   "dur": 7.8359999999999985,
+   "offset": 3
+  },
+  {
+   "at": 22.768,
+   "name": "crack",
+   "gain": 0.4,
+   "fadeIn": 0.01,
+   "fadeOut": 0.5,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 22.818,
+   "name": "rumble",
+   "gain": 0.3,
+   "fadeIn": 0.02,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 24.468,
+   "name": "crack",
+   "gain": 0.4,
+   "fadeIn": 0.01,
+   "fadeOut": 0.5,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 24.518,
+   "name": "rumble",
+   "gain": 0.3,
+   "fadeIn": 0.02,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 26.068,
+   "name": "crack",
+   "gain": 0.4,
+   "fadeIn": 0.01,
+   "fadeOut": 0.5,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 26.118000000000002,
+   "name": "rumble",
+   "gain": 0.3,
+   "fadeIn": 0.02,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 27.668,
+   "name": "crack",
+   "gain": 0.4,
+   "fadeIn": 0.01,
+   "fadeOut": 0.5,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 27.718,
+   "name": "rumble",
+   "gain": 0.3,
+   "fadeIn": 0.02,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 29.554,
+   "name": "micro",
+   "gain": 0.3,
+   "fadeIn": 0.2,
+   "fadeOut": 1,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 29.604,
+   "name": "rain",
+   "gain": 0.4,
+   "fadeIn": 0.4,
+   "fadeOut": 0.6,
+   "dur": 11.136000000000003,
+   "offset": 1
+  },
+  {
+   "at": 32.004,
+   "name": "crack",
+   "gain": 0.33,
+   "fadeIn": 0.01,
+   "fadeOut": 0.35,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 32.553999999999995,
+   "name": "crack",
+   "gain": 0.33,
+   "fadeIn": 0.01,
+   "fadeOut": 0.35,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 33.104,
+   "name": "crack",
+   "gain": 0.33,
+   "fadeIn": 0.01,
+   "fadeOut": 0.35,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 33.653999999999996,
+   "name": "crack",
+   "gain": 0.33,
+   "fadeIn": 0.01,
+   "fadeOut": 0.35,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 34.204,
+   "name": "crack",
+   "gain": 0.33,
+   "fadeIn": 0.01,
+   "fadeOut": 0.35,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 34.754,
+   "name": "crack",
+   "gain": 0.33,
+   "fadeIn": 0.01,
+   "fadeOut": 0.35,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 35.303999999999995,
+   "name": "crack",
+   "gain": 0.33,
+   "fadeIn": 0.01,
+   "fadeOut": 0.35,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 30.003999999999998,
+   "name": "epic",
+   "gain": 0.45,
+   "fadeIn": 1.2,
+   "fadeOut": 1.8,
+   "dur": 10.736000000000002,
+   "offset": 0
+  },
+  {
+   "at": 38.612,
+   "name": "rumble",
+   "gain": 0.3,
+   "fadeIn": 0.05,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  }
+ ],
+ "duck": [
+  [
+   0.19999999999999998,
+   2.011
+  ],
+  [
+   2.1109999999999998,
+   5.141
+  ],
+  [
+   5.2410000000000005,
+   9.531
+  ],
+  [
+   9.631,
+   17.015
+  ],
+  [
+   17.115,
+   21.567999999999998
+  ],
+  [
+   21.668,
+   29.404
+  ],
+  [
+   29.503999999999998,
+   37.012
+  ],
+  [
+   37.112,
+   39.288000000000004
+  ]
+ ],
+ "duckGain": 0.55,
+ "total": 40.74,
+ "sfxGain": 0.9,
+ "voiceGain": 1
+}
