@@ -1,0 +1,294 @@
+[
+ {
+  "caps": [
+   [
+    0.0,
+    "Știri din anul"
+   ],
+   [
+    0.918,
+    "2050."
+   ],
+   [
+    2.142,
+    "Atenție:"
+   ],
+   [
+    2.693,
+    "tot ce urmează"
+   ],
+   [
+    3.611,
+    "e ficțiune."
+   ]
+  ],
+  "dur": 4.161,
+  "text": "Știri din anul 2050. Atenție: tot ce urmează e ficțiune."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Prima știre."
+   ],
+   [
+    1.475,
+    "Orașul de"
+   ],
+   [
+    1.963,
+    "pe Marte și-a"
+   ],
+   [
+    2.647,
+    "ales primul"
+   ],
+   [
+    3.233,
+    "primar."
+   ],
+   [
+    4.032,
+    "A câștigat"
+   ],
+   [
+    4.521,
+    "cu doar trei"
+   ],
+   [
+    5.1,
+    "voturi."
+   ]
+  ],
+  "dur": 5.456,
+  "text": "Prima știre. Orașul de pe Marte și-a ales primul primar. A câștigat cu doar trei voturi."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "În România,"
+   ],
+   [
+    0.598,
+    "autostrada Iași –"
+   ],
+   [
+    1.495,
+    "Târgu Mureș"
+   ],
+   [
+    2.093,
+    "a fost,"
+   ],
+   [
+    2.492,
+    "în sfârșit,"
+   ],
+   [
+    3.09,
+    "terminată."
+   ],
+   [
+    3.638,
+    "Oamenii au plâns"
+   ],
+   [
+    4.485,
+    "de fericire."
+   ]
+  ],
+  "dur": 4.884,
+  "text": "În România, autostrada Iași – Târgu Mureș a fost, în sfârșit, terminată. Oamenii au plâns de fericire."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Sport."
+   ],
+   [
+    0.836,
+    "Primul meci"
+   ],
+   [
+    1.341,
+    "de fotbal"
+   ],
+   [
+    1.763,
+    "de pe Lună"
+   ],
+   [
+    2.226,
+    "s-a oprit după"
+   ],
+   [
+    2.858,
+    "trei minute:"
+   ],
+   [
+    3.937,
+    "mingea a zburat"
+   ],
+   [
+    4.738,
+    "și încă n-a"
+   ],
+   [
+    5.339,
+    "aterizat."
+   ]
+  ],
+  "dur": 5.839,
+  "text": "Sport. Primul meci de fotbal de pe Lună s-a oprit după trei minute: mingea a zburat și încă n-a aterizat."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Tehnologie."
+   ],
+   [
+    1.342,
+    "Roboții"
+   ],
+   [
+    1.726,
+    "de livrare au"
+   ],
+   [
+    2.397,
+    "intrat în grevă."
+   ],
+   [
+    3.922,
+    "Cer o zi"
+   ],
+   [
+    4.383,
+    "liberă"
+   ],
+   [
+    4.741,
+    "pe săptămână"
+   ],
+   [
+    5.406,
+    "și încărcare"
+   ],
+   [
+    6.071,
+    "gratuită."
+   ]
+  ],
+  "dur": 6.582,
+  "text": "Tehnologie. Roboții de livrare au intrat în grevă. Cer o zi liberă pe săptămână și încărcare gratuită."
+ },
+ {
+  "caps": [
+   [
+    0.0,
+    "Vremea."
+   ],
+   [
+    0.505,
+    "Mâine,"
+   ],
+   [
+    0.946,
+    "ploaie ușoară"
+   ],
+   [
+    1.829,
+    "de meteoriți"
+   ],
+   [
+    2.649,
+    "în nordul țării."
+   ],
+   [
+    3.721,
+    "Nu uitați umbrela"
+   ],
+   [
+    4.856,
+    "blindată."
+   ]
+  ],
+  "dur": 5.235,
+  "text": "Vremea. Mâine, ploaie ușoară de meteoriți în nordul țării. Nu uitați umbrela blindată."
+ },
+ {
+  "caps": [
+   [
+    0.139,
+    "Și ultima știre:"
+   ],
+   [
+    4.262,
+    "un om"
+   ],
+   [
+    4.393,
+    "din 2026"
+   ],
+   [
+    5.05,
+    "a trimis"
+   ],
+   [
+    5.247,
+    "un mesaj"
+   ],
+   [
+    5.444,
+    "în viitor."
+   ],
+   [
+    6.253,
+    "Scria doar atât:"
+   ],
+   [
+    7.624,
+    "lasă"
+   ],
+   [
+    7.851,
+    "un comentariu"
+   ],
+   [
+    8.487,
+    "dacă ai ajuns"
+   ],
+   [
+    9.123,
+    "până aici."
+   ]
+  ],
+  "dur": 9.622,
+  "text": "Și ultima știre: un om din 2026 a trimis un mesaj în viitor. Scria doar atât: lasă un comentariu dacă ai ajuns până aici."
+ },
+ {
+  "caps": [
+   [
+    0.122,
+    "Tu ce știre"
+   ],
+   [
+    0.66,
+    "ai vrea"
+   ],
+   [
+    1.019,
+    "să auzi"
+   ],
+   [
+    1.378,
+    "în 2050?"
+   ]
+  ],
+  "dur": 2.41,
+  "text": "Tu ce știre ai vrea să auzi în 2050?"
+ }
+]
