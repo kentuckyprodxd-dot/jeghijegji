@@ -1,0 +1,238 @@
+{
+ "voice": [
+  {
+   "at": 0.3,
+   "i": 0
+  },
+  {
+   "at": 5.633,
+   "i": 1
+  },
+  {
+   "at": 10.537,
+   "i": 2
+  },
+  {
+   "at": 18.411,
+   "i": 3
+  },
+  {
+   "at": 25.158,
+   "i": 4
+  },
+  {
+   "at": 32.019,
+   "i": 5
+  },
+  {
+   "at": 39.334,
+   "i": 6
+  },
+  {
+   "at": 45.557,
+   "i": 7
+  }
+ ],
+ "sfx": [
+  {
+   "at": 0,
+   "name": "micro",
+   "gain": 0.4,
+   "fadeIn": 0.02,
+   "fadeOut": 1.0,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 0,
+   "name": "tension",
+   "gain": 0.18,
+   "fadeIn": 0.5,
+   "fadeOut": 1.0,
+   "dur": 50.33,
+   "offset": 0
+  },
+  {
+   "at": 5.383,
+   "name": "whoosh",
+   "gain": 0.22,
+   "fadeIn": 0.02,
+   "fadeOut": 0.4,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 10.287,
+   "name": "whoosh",
+   "gain": 0.22,
+   "fadeIn": 0.02,
+   "fadeOut": 0.4,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 18.161,
+   "name": "whoosh",
+   "gain": 0.22,
+   "fadeIn": 0.02,
+   "fadeOut": 0.4,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 24.908,
+   "name": "whoosh",
+   "gain": 0.22,
+   "fadeIn": 0.02,
+   "fadeOut": 0.4,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 31.769,
+   "name": "whoosh",
+   "gain": 0.22,
+   "fadeIn": 0.02,
+   "fadeOut": 0.4,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 39.084,
+   "name": "whoosh",
+   "gain": 0.22,
+   "fadeIn": 0.02,
+   "fadeOut": 0.4,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 45.307,
+   "name": "whoosh",
+   "gain": 0.22,
+   "fadeIn": 0.02,
+   "fadeOut": 0.4,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 5.433,
+   "name": "city",
+   "gain": 0.25,
+   "fadeIn": 0.2,
+   "fadeOut": 0.3,
+   "dur": 4.9,
+   "offset": 0
+  },
+  {
+   "at": 8.133,
+   "name": "horns",
+   "gain": 0.3,
+   "fadeIn": 0.02,
+   "fadeOut": 0.6,
+   "dur": 2.4,
+   "offset": 0
+  },
+  {
+   "at": 16.437,
+   "name": "boing",
+   "gain": 0.38,
+   "fadeIn": 0.02,
+   "fadeOut": 0.4,
+   "dur": null,
+   "offset": 0
+  },
+  {
+   "at": 18.211,
+   "name": "space",
+   "gain": 0.3,
+   "fadeIn": 0.3,
+   "fadeOut": 0.4,
+   "dur": 6.75,
+   "offset": 0
+  },
+  {
+   "at": 24.958,
+   "name": "ocean",
+   "gain": 0.35,
+   "fadeIn": 0.3,
+   "fadeOut": 0.4,
+   "dur": 6.86,
+   "offset": 0
+  },
+  {
+   "at": 31.819,
+   "name": "crowd",
+   "gain": 0.3,
+   "fadeIn": 0.3,
+   "fadeOut": 0.3,
+   "dur": 7.5,
+   "offset": 0
+  },
+  {
+   "at": 37.439,
+   "name": "cheer",
+   "gain": 0.5,
+   "fadeIn": 0.02,
+   "fadeOut": 0.5,
+   "dur": 2.0,
+   "offset": 0
+  },
+  {
+   "at": 43.684,
+   "name": "surge",
+   "gain": 0.45,
+   "fadeIn": 0.02,
+   "fadeOut": 0.5,
+   "dur": 1.6,
+   "offset": 0
+  },
+  {
+   "at": 44.134,
+   "name": "epic",
+   "gain": 0.35,
+   "fadeIn": 0.02,
+   "fadeOut": 1.5,
+   "dur": 7.195999999999998,
+   "offset": 0
+  }
+ ],
+ "duck": [
+  [
+   0.19999999999999998,
+   5.183
+  ],
+  [
+   5.533,
+   10.087
+  ],
+  [
+   10.437000000000001,
+   17.961000000000002
+  ],
+  [
+   18.311,
+   24.708000000000002
+  ],
+  [
+   25.058,
+   31.569000000000003
+  ],
+  [
+   31.918999999999997,
+   38.88399999999999
+  ],
+  [
+   39.234,
+   43.907
+  ],
+  [
+   45.457,
+   49.382
+  ]
+ ],
+ "duckGain": 0.55,
+ "total": 51.33,
+ "sfxGain": 0.9,
+ "voiceGain": 1
+}
