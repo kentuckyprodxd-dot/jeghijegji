@@ -1,0 +1,694 @@
+<meta charset="utf-8">
+<title>Casca în spațiu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@600;800;900&family=JetBrains+Mono:wght@700&display=swap">
+<style>
+  /* Cadru vertical 9:16, aspect cinematic: randare 3D cu post-procesare (bloom, ACES, gradare), text curat deasupra */
+  :root {
+    --bg: #04050a;
+    --ink: #f7f4ee;
+    --warm: #ffd27a;
+    --sky: #8fd3ff;
+    --muted: rgba(247, 244, 238, .72);
+    --f-slam: "Anton", "Impact", "Arial Narrow", sans-serif;
+    --f-cap: "Montserrat", "Arial Black", system-ui, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--f-cap);
+    display: grid; place-items: center;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px; box-sizing: border-box; overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage {
+    position: relative;
+    width: min(100%, calc((100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 9 / 16));
+    aspect-ratio: 9 / 16; max-width: 100%;
+    border-radius: 16px; overflow: hidden; background: #000;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+    user-select: none; -webkit-user-select: none; container-type: inline-size;
+  }
+  body.render { padding: 0; display: block; }
+  body.render .stage { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+  canvas#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .fade { position: absolute; inset: 0; z-index: 7; background: #000; opacity: 0; pointer-events: none; }
+  .flash { position: absolute; inset: 0; z-index: 7; background: #fff3dc; opacity: 0; pointer-events: none; }
+  .shade { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(to top, rgba(0, 0, 0, .45), transparent 32%), linear-gradient(to bottom, rgba(0, 0, 0, .3), transparent 18%); }
+
+  .hud { position: absolute; left: 6%; top: 5%; z-index: 5; opacity: 0; text-shadow: 0 2px 12px rgba(0, 0, 0, .7); }
+  .hud .l { font: 800 2.7cqw/1 var(--f-cap); letter-spacing: .3em; color: var(--muted); }
+  .hud .v { margin-top: 1.4cqw; font: 400 12cqw/.9 var(--f-slam); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+
+  .title { position: absolute; left: 7%; right: 7%; top: 12%; z-index: 4; text-align: center; opacity: 0; text-shadow: 0 .6cqw 3cqw rgba(0, 0, 0, .6); }
+  .title .k { display: block; font: 800 3.8cqw/1 var(--f-cap); letter-spacing: .34em; color: var(--muted); margin-bottom: 3cqw; }
+  .title .m { font: 400 14.5cqw/.92 var(--f-slam); text-transform: uppercase; letter-spacing: .01em; }
+  .title em { font-style: normal; color: var(--warm); }
+
+  .slam { position: absolute; left: 6%; right: 6%; top: 30%; z-index: 4; text-align: center; opacity: 0; pointer-events: none; }
+  .slam .big { font: 400 17cqw/.92 var(--f-slam); letter-spacing: .01em; white-space: nowrap; text-shadow: 0 .5cqw 3cqw rgba(0, 0, 0, .55); }
+  .slam .sub { margin-top: 2.6cqw; display: inline-block; padding: 1.5cqw 3.2cqw; border-radius: 99px; background: rgba(10, 12, 20, .45); border: 1px solid rgba(255, 255, 255, .22);
+    font: 800 3.1cqw/1.2 var(--f-cap); text-transform: uppercase; letter-spacing: .14em; color: var(--ink); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .slam.warm .big { color: var(--warm); } .slam.sky .big { color: var(--sky); }
+
+  .cap { position: absolute; left: 6%; right: 6%; bottom: 17%; z-index: 4; text-align: center; font: 900 8.4cqw/1.08 var(--f-cap); text-transform: uppercase; letter-spacing: -.01em;
+    text-shadow: 0 .4cqw 0 rgba(0, 0, 0, .35), 0 0 3.5cqw rgba(0, 0, 0, .55); }
+  .cap .hl { color: var(--warm); }
+  .trench { position: absolute; left: 6%; right: 6%; top: 27%; z-index: 4; opacity: 0; pointer-events: none; padding: 3cqw; border-radius: 4cqw; background: rgba(5, 10, 20, .55); border: 1px solid rgba(255, 255, 255, .18); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+  .trench svg { display: block; width: 100%; height: auto; }
+  .trench .tl { font: 800 15px Montserrat, Arial, sans-serif; fill: rgba(255, 255, 255, .85); letter-spacing: .08em; } .trench .gold { fill: #ffd27a; font-size: 18px; }
+
+  .endcard { position: absolute; left: 7%; right: 7%; top: 27%; z-index: 4; text-align: center; opacity: 0; pointer-events: none; }
+  .endcard .q { font: 400 13.5cqw/.95 var(--f-slam); text-transform: uppercase; text-shadow: 0 .6cqw 3cqw rgba(0, 0, 0, .7); }
+  .endcard .q em { font-style: normal; color: var(--warm); }
+  .endcard .c { margin-top: 4.5cqw; font: 800 3.6cqw/1.3 var(--f-cap); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+
+  .snd { position: absolute; top: 3.6%; right: 5%; z-index: 9; width: 9.5cqw; height: 9.5cqw; min-width: 34px; min-height: 34px; border: 0; border-radius: 50%; padding: 0;
+    background: rgba(0, 0, 0, .42); color: var(--ink); display: grid; place-items: center; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .snd svg { width: 52%; height: 52%; fill: currentColor; }
+  .snd:focus-visible, .play:focus-visible { outline: 2px solid var(--warm); outline-offset: 3px; }
+  .overlay { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5cqw; text-align: center; padding: 0 8%; cursor: pointer;
+    background: radial-gradient(circle at 50% 52%, rgba(4, 5, 10, .1), rgba(4, 5, 10, .82)); }
+  .overlay h1 { margin: 0; font: 400 14cqw/.92 var(--f-slam); text-transform: uppercase; text-shadow: 0 .6cqw 3cqw rgba(0, 0, 0, .7); }
+  .overlay h1 em { font-style: normal; color: var(--warm); }
+  .overlay p { margin: 0; font: 800 3.4cqw/1.4 var(--f-cap); color: var(--muted); }
+  .play { width: 20cqw; height: 20cqw; border-radius: 50%; border: 0; padding: 0; background: var(--ink); color: #0a0c10; display: grid; place-items: center; cursor: pointer; box-shadow: 0 1cqw 4cqw rgba(0, 0, 0, .5); }
+  .play svg { width: 40%; height: 40%; fill: currentColor; margin-left: 8%; }
+  .play.busy { opacity: .45; } .play.again svg { margin-left: 0; }
+  .overlay.paused { background: rgba(4, 5, 10, .35); }
+  .sources { font: 700 2.6cqw/1.5 var(--f-cap); color: var(--muted); max-width: 94%; text-transform: none; }
+  .prog { position: absolute; left: 0; right: 0; top: 0; height: 1cqw; z-index: 9; background: rgba(255, 255, 255, .14); }
+  .prog i { display: block; height: 100%; background: linear-gradient(90deg, #ffd27a, #ff5a3c); transform-origin: 0 50%; transform: scaleX(0); box-shadow: 0 0 2cqw rgba(255, 120, 60, .8); }
+  .mon { position: absolute; left: 5%; top: 3.6%; width: 52cqw; z-index: 5; opacity: 0; padding: 2.6cqw 3.2cqw 2.2cqw; border-radius: 3.4cqw; box-sizing: border-box;
+    background: linear-gradient(160deg, rgba(10, 16, 30, .72), rgba(6, 9, 18, .55)); border: 1px solid rgba(143, 211, 255, .28); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 1.5cqw 5cqw rgba(0, 0, 0, .45), inset 0 0 0 1px rgba(255, 255, 255, .04); font-family: var(--f-mono); color: var(--ink); }
+  .mon .hd { display: flex; align-items: center; gap: 1.6cqw; font: 700 2.25cqw/1 var(--f-mono); letter-spacing: .14em; color: rgba(143, 211, 255, .9); }
+  .mon .dot { width: 1.7cqw; height: 1.7cqw; border-radius: 50%; background: #ff3b30; box-shadow: 0 0 1.6cqw #ff3b30; }
+  .mon .st { display: inline-block; margin: 1.8cqw 0 1.2cqw; padding: .9cqw 2cqw; border-radius: 99px; font: 800 2.5cqw/1 var(--f-cap); letter-spacing: .12em; }
+  .st.ok { background: rgba(93, 255, 154, .16); color: #5dff9a; border: 1px solid rgba(93, 255, 154, .5); }
+  .st.warn { background: rgba(255, 179, 71, .16); color: #ffb347; border: 1px solid rgba(255, 179, 71, .55); }
+  .st.bad { background: rgba(255, 90, 60, .2); color: #ff6a4c; border: 1px solid rgba(255, 90, 60, .6); }
+  .mon .row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 1.3cqw; font: 700 2.1cqw/1 var(--f-mono); letter-spacing: .12em; color: rgba(247, 244, 238, .62); }
+  .mon .row b { font: 400 2.6cqw/1 var(--f-mono); color: rgba(247, 244, 238, .7); letter-spacing: 0; }
+  .mon .row em { font: 400 6.4cqw/1 var(--f-slam); font-style: normal; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+  .mon .bar { height: .9cqw; margin-top: 1cqw; border-radius: 99px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+  .mon .bar i { display: block; height: 100%; background: linear-gradient(90deg, #8fd3ff, #5dff9a); transform-origin: 0 50%; }
+  .mon .bar.o2 i { background: linear-gradient(90deg, #ff5a3c, #ffd27a 60%, #5dff9a); }
+  .mon canvas { display: block; width: 100%; height: 8cqw; margin-top: 1cqw; border-radius: 1.4cqw; background: rgb(8, 12, 22); }
+  .bodyw { position: absolute; right: 5%; top: 3.6%; width: 30cqw; z-index: 5; text-align: center; }
+  .bodyw svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 .8cqw 2cqw rgba(0, 0, 0, .5)); }
+  .bodyw .lb { margin-top: 1cqw; font: 700 2cqw/1 var(--f-mono); letter-spacing: .16em; color: rgba(143, 211, 255, .9); }
+  #bodyS { opacity: 0; transform-origin: 50% 40%; }
+  .chip { position: absolute; left: 50%; top: 31%; z-index: 6; opacity: 0; display: flex; align-items: center; gap: 2.4cqw; margin-left: -40cqw; width: 80cqw; box-sizing: border-box; padding: 2.2cqw 3.4cqw;
+    border-radius: 99px; font: 900 4.6cqw/1.1 var(--f-cap); letter-spacing: .02em; color: #fff; background: rgba(10, 14, 24, .78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 1.2cqw 4cqw rgba(0, 0, 0, .45); }
+  .chip .ic { flex: none; width: 8cqw; height: 8cqw; border-radius: 50%; display: grid; place-items: center; font: 900 5cqw/1 var(--f-cap); color: #0a0c10; }
+  .chip.ok { border: .5cqw solid #5dff9a; } .chip.ok .ic { background: #5dff9a; }
+  .chip.bad { border: .5cqw solid #ff5a3c; } .chip.bad .ic { background: #ff5a3c; color: #fff; }
+  .chip.warn { border: .5cqw solid #ffb347; } .chip.warn .ic { background: #ffb347; }
+  .alarm { position: absolute; left: 0; right: 0; top: 45%; z-index: 6; opacity: 0; padding: 2.6cqw 0; text-align: center; background: rgba(220, 30, 20, .88); font: 400 9cqw/1 var(--f-slam); letter-spacing: .06em; color: #fff; box-shadow: 0 0 6cqw rgba(255, 40, 20, .7); }
+  .alarm small { display: block; margin-top: 1.2cqw; font: 800 2.8cqw/1 var(--f-cap); letter-spacing: .3em; }
+  .tunnel { position: absolute; inset: 0; z-index: 3; opacity: 0; pointer-events: none; background: radial-gradient(circle at 50% 46%, transparent 14%, rgba(0, 0, 0, .55) 34%, rgba(0, 0, 0, .96) 62%); }
+  .arch { position: absolute; inset: 0; z-index: 3; opacity: 0; pointer-events: none; }
+  .arch .grain { position: absolute; inset: 0; opacity: .32; mix-blend-mode: overlay; background-size: 200px 200px; }
+  .arch .frame { position: absolute; inset: 0; border: 3.4cqw solid #050505; box-shadow: inset 0 0 12cqw rgba(0, 0, 0, .85); }
+  .arch .stamp { position: absolute; left: 7%; top: 6%; padding: 2cqw 3cqw; border: .5cqw solid rgba(255, 240, 210, .85); color: rgba(255, 240, 210, .92); font: 700 3.1cqw/1.35 var(--f-mono); letter-spacing: .12em; transform: rotate(-2deg); }
+  .arch .stamp b { display: block; font: 400 9cqw/1 var(--f-slam); letter-spacing: .02em; }
+  .arch .rec { position: absolute; right: 7%; top: 7%; font: 700 3cqw/1 var(--f-mono); color: rgba(255, 240, 210, .9); letter-spacing: .1em; }
+  .slam { top: 38%; }
+  .cap { font-size: 9cqw; }
+</style>
+<div class="stage" id="stage">
+  <canvas id="gl"></canvas>
+  <div class="shade"></div>
+  <div class="hud" id="hud" hidden><div class="l" id="hL"></div><div class="v" id="hV"></div></div>
+  <div class="prog"><i id="progI"></i></div>
+  <div class="mon" id="mon"><div class="hd"><i class="dot"></i>SIMULARE · CORP ÎN VID</div><div class="st ok" id="mSt">CASCĂ ETANȘĂ</div>
+    <div class="row"><span>PRESIUNE</span><b><em id="mP">29,6</em> kPa</b></div><div class="bar"><i id="mPb"></i></div>
+    <div class="row"><span>PULS</span><b><em id="mB">78</em> bpm</b></div><canvas id="ecg" width="300" height="64"></canvas>
+    <div class="row"><span>OXIGEN</span><b><em id="mO">98</em> %</b></div><div class="bar o2"><i id="mOb"></i></div>
+    <div class="row"><span>TIMP ÎN VID</span><b><em id="mT">00:00,0</em></b></div></div>
+  <div class="bodyw"><svg id="bodyS" viewBox="0 0 100 196" aria-hidden="true">
+    <g id="zSkin" style="opacity:0;fill:#5dff9a;fill-opacity:.28"><circle cx="50" cy="22" r="14"/><rect x="30" y="40" width="40" height="62" rx="14"/><rect x="15" y="44" width="11" height="58" rx="5.5"/><rect x="74" y="44" width="11" height="58" rx="5.5"/><rect x="32" y="104" width="15" height="80" rx="7"/><rect x="53" y="104" width="15" height="80" rx="7"/></g>
+    <g fill="none" stroke="rgba(143,211,255,.85)" stroke-width="1.6"><circle cx="50" cy="22" r="14"/><rect x="30" y="40" width="40" height="62" rx="14"/><rect x="15" y="44" width="11" height="58" rx="5.5"/><rect x="74" y="44" width="11" height="58" rx="5.5"/><rect x="32" y="104" width="15" height="80" rx="7"/><rect x="53" y="104" width="15" height="80" rx="7"/></g>
+    <g id="zLung" style="opacity:0" fill="#ff5a3c"><ellipse cx="42" cy="63" rx="7" ry="13"/><ellipse cx="58" cy="63" rx="7" ry="13"/></g>
+    <ellipse id="zMouth" style="opacity:0" cx="50" cy="29" rx="5.5" ry="2.6" fill="#ff5a3c"/>
+    <ellipse id="zBrain" style="opacity:0" cx="50" cy="18" rx="9" ry="6.5" fill="#a48bff"/>
+    <text id="zHeat" style="opacity:0" x="50" y="78" text-anchor="middle" fill="#ffd27a" font-family="Anton, Impact, sans-serif" font-size="15">36 °C</text>
+  </svg><div class="lb">SCANARE CORP</div></div>
+  <div class="chip" id="chip"><span class="ic" id="chipI">✓</span><span id="chipT"></span></div>
+  <div class="alarm" id="alarm">⚠ DEPRESURIZARE<small>PRESIUNE: 0 kPa</small></div>
+  <div class="tunnel" id="tunnel"></div>
+  <div class="arch" id="arch"><div class="grain" id="grain"></div><div class="frame"></div><div class="stamp"><b>1966</b>ARHIVĂ · NASA<br>CAMERA DE VID · HOUSTON</div><div class="rec">● REC</div></div>
+
+  <div class="title" id="title"><span class="k">Ce s-ar întâmpla dacă</span><span class="m">ți-ai scoate <em>casca</em> în spațiu?</span></div>
+  <div class="slam" id="slam"><div class="big" id="slamBig"></div><div class="sub" id="slamSub"></div></div>
+  <div class="cap" id="cap"></div>
+  <div class="endcard" id="endcard"><div class="q">Câte <em>secunde</em> ai rezista?</div><div class="c">Scrie în comentarii</div></div>
+  <div class="flash" id="flash"></div>
+  <div class="fade" id="fade"></div>
+
+  <button class="snd" id="snd" aria-label="Oprește sunetul" hidden>
+    <svg viewBox="0 0 24 24" id="sndOn"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+    <svg viewBox="0 0 24 24" id="sndOff" hidden><path d="M16.5 12A4.5 4.5 0 0 0 14 8v2.2l2.45 2.45c.03-.2.05-.42.05-.65zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.8 8.8 0 0 0 21 12a9 9 0 0 0-7-8.8v2.1A7 7 0 0 1 19 12zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.420.93-2.25 1.18v2.06a9 9 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/></svg>
+  </button>
+  <div class="overlay" id="start">
+    <h1>Casca în <em>spațiu</em></h1>
+    <button class="play busy" id="playBtn" aria-label="Pornește videoul"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+    <p id="startHint">Se încarcă…</p>
+  </div>
+  <div class="overlay paused" id="paused" hidden>
+    <button class="play" aria-label="Continuă"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg></button>
+  </div>
+  <div class="overlay" id="end" hidden>
+    <h1>Câte <em>secunde</em> ai rezista?</h1>
+    <button class="play again" id="againBtn" aria-label="Vezi din nou"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg></button>
+    <div class="sources">După NASA și literatura medicală despre expunerea la vid: corpul nu explodează (pielea și țesuturile rezistă), dar apare ebulismul (lichidele se vaporizează la presiune foarte mică) și corpul se umflă; ținerea respirației poate rupe plămânii; pierderea cunoștinței survine după ~10–15 secunde; expunerea de până la ~90 de secunde e considerată, probabil, supraviețuibilă cu recompresie rapidă. Vidul nu răcește instantaneu (lipsește convecția). Pe 14 decembrie 1966, la Manned Spacecraft Center (Houston), costumul tehnicianului Jim LeBlanc s-a depresurizat într-o cameră de vid; a rămas conștient ~14 secunde, ultimul lucru pe care și-l amintește fiind saliva care fierbea pe limbă, și a supraviețuit după represurizare. Valorile de pe monitor sunt ilustrative (simulare). Scene redate procedural. Textura Pământului: NASA Visible Earth. Voce: ElevenLabs (Chris); efecte: ElevenLabs.</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const TIMING = /*TIMING*/[];
+  const AUDIO = /*AUDIO*/[];
+  const SFX = /*SFX*/{};                 // efecte sonore și muzică (ElevenLabs sound-generation)
+  const EARTH = /*IMG_earth*/'';         // NASA Visible Earth, Blue Marble
+  const LANDM = /*IMG_land*/'';          // mască uscat/apă
+
+  document.documentElement.lang = 'ro';
+  const RENDER = /[?&]render\b/.test(location.search);
+  if (RENDER) document.body.classList.add('render');
+  const $ = id => document.getElementById(id);
+  let seed = 3141;
+  const rand = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const ss = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const eio = u => { u = clamp(u); return u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; };
+  const eout = u => 1 - Math.pow(1 - clamp(u), 3);
+
+  // ---------- Cronologie ----------
+  const LEAD = .35, GAP = .45, TAIL = 3.0;
+  const S = TIMING.map(s => ({ caps: s.caps, dur: s.dur }));
+  { let acc = LEAD; S.forEach(s => { s.start = acc; acc += s.dur + GAP; }); }
+  const SEND = i => S[i].start + S[i].dur;
+  const END = SEND(7), TOTAL = END + TAIL;
+  const capT = (i, re) => S[i].start + S[i].caps[Math.max(0, S[i].caps.findIndex(c => re.test(c[1])))][0];
+  const segAt = t => { let i = 0; for (let k = 1; k < S.length; k++) if (t >= S[k].start - GAP / 2) i = k; return i; };
+
+  // ---------- Three.js + post-procesare ----------
+  const stage = $('stage'), cvs = $('gl');
+  const renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: false, preserveDrawingBuffer: RENDER, powerPreference: 'high-performance' });
+  const PR = RENDER ? (window.devicePixelRatio || 2) : Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(PR);
+  renderer.autoClear = false; renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const camera = new THREE.PerspectiveCamera(42, 9 / 16, .02, 400);
+  const RTC = renderer.capabilities.isWebGL2 ? THREE.WebGLMultisampleRenderTarget : THREE.WebGLRenderTarget;
+  const rtMain = new RTC(4, 4, { type: THREE.HalfFloatType });
+  const rtA = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }), rtB = rtA.clone();
+  const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), quadScene = new THREE.Scene();
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2)); quadScene.add(quad);
+  const VQ = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }';
+  const brightM = new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: VQ,
+    fragmentShader: 'uniform sampler2D t; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb; float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(.85, 2.2, l), 1.); }' });
+  const blurM = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, d: { value: new THREE.Vector2() } }, vertexShader: VQ,
+    fragmentShader: `uniform sampler2D t; uniform vec2 d; varying vec2 vUv; void main(){
+      vec3 c = texture2D(t, vUv).rgb * .227;
+      c += (texture2D(t, vUv + d * 1.385).rgb + texture2D(t, vUv - d * 1.385).rgb) * .316;
+      c += (texture2D(t, vUv + d * 3.231).rgb + texture2D(t, vUv - d * 3.231).rgb) * .07;
+      gl_FragColor = vec4(c, 1.); }` });
+  const compM = new THREE.ShaderMaterial({ uniforms: { tS: { value: null }, tB: { value: null }, uBloom: { value: .9 }, uExp: { value: 1 }, uTime: { value: 0 }, uRes: { value: new THREE.Vector2() }, uSat: { value: 1.08 } }, vertexShader: VQ,
+    fragmentShader: `uniform sampler2D tS, tB; uniform float uBloom, uExp, uTime, uSat; uniform vec2 uRes; varying vec2 vUv;
+      vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+      void main(){
+        vec2 dc = vUv - .5; float ca = .0022 * dot(dc, dc) * 4.;
+        vec3 c = vec3(texture2D(tS, vUv + dc * ca).r, texture2D(tS, vUv).g, texture2D(tS, vUv - dc * ca).b);
+        c += texture2D(tB, vUv).rgb * uBloom;
+        c = aces(c * uExp);
+        c = pow(c, vec3(1. / 2.2));
+        float l = dot(c, vec3(.299, .587, .114)); c = mix(vec3(l), c, uSat);
+        c = mix(c, c * vec3(1.04, 1., .95), smoothstep(.45, 1., l)) ; c = mix(c, c * vec3(.94, 1., 1.06), 1. - smoothstep(0., .4, l));
+        vec2 v = dc * vec2(1., .85); c *= 1. - dot(v, v) * 1.1;
+        float g = fract(sin(dot(floor(vUv * uRes) + floor(uTime * 24.) * 37., vec2(12.9898, 78.233))) * 43758.5453);
+        c += (g - .5) * .022;
+        gl_FragColor = vec4(c, 1.); }` });
+  function resize() {
+    const r = cvs.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+    const w = Math.max(2, Math.round(r.width * PR)), h = Math.max(2, Math.round(r.height * PR));
+    rtMain.setSize(w, h); rtA.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2)); rtB.setSize(Math.max(2, w >> 2), Math.max(2, h >> 2)); compM.uniforms.uRes.value.set(w, h);
+  }
+  new ResizeObserver(resize).observe(stage); resize();
+  const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, quadCam); };
+  function present(layers, t, bloom = .9, exp = 1) {
+    renderer.setRenderTarget(rtMain); renderer.clear();
+    layers.forEach(([sc, cm], k) => { if (k) renderer.clearDepth(); renderer.render(sc, cm); });
+    brightM.uniforms.t.value = rtMain.texture; pass(brightM, rtA);
+    for (let k = 0; k < 2; k++) {
+      blurM.uniforms.t.value = rtA.texture; blurM.uniforms.d.value.set(1 / rtA.width, 0); pass(blurM, rtB);
+      blurM.uniforms.t.value = rtB.texture; blurM.uniforms.d.value.set(0, 1 / rtA.height); pass(blurM, rtA);
+    }
+    Object.assign(compM.uniforms, {}); compM.uniforms.tS.value = rtMain.texture; compM.uniforms.tB.value = rtA.texture; compM.uniforms.uBloom.value = bloom; compM.uniforms.uExp.value = exp; compM.uniforms.uTime.value = t;
+    pass(compM, null);
+  }
+  const loadTex = src => new Promise(res => { const tx = new THREE.TextureLoader().load(src, () => res(tx), undefined, () => res(tx)); tx.anisotropy = 8; });
+  const NOISE = `
+    float hash13(vec3 p){ p = fract(p * .1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+    float vnoise(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+      return mix(mix(mix(hash13(i), hash13(i + vec3(1,0,0)), f.x), mix(hash13(i + vec3(0,1,0)), hash13(i + vec3(1,1,0)), f.x), f.y),
+                 mix(mix(hash13(i + vec3(0,0,1)), hash13(i + vec3(1,0,1)), f.x), mix(hash13(i + vec3(0,1,1)), hash13(i + vec3(1,1,1)), f.x), f.y), f.z); }
+    float fbm(vec3 p){ float a = .5, s = 0.; for (int k = 0; k < 5; k++) { s += a * vnoise(p); p *= 2.03; a *= .5; } return s; }`;
+
+  // ---------- Elemente comune ----------
+  const starField = (r, n) => { const p = new Float32Array(n * 3), s = new Float32Array(n), c = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const v = new THREE.Vector3(rand() - .5, rand() - .5, rand() - .5).normalize().multiplyScalar(r); p.set([v.x, v.y, v.z], i * 3); s[i] = Math.pow(rand(), 6) * 3 + .6;
+      const w = rand(); c.set(w < .2 ? [1, .85, .7] : w < .4 ? [.75, .85, 1] : [1, 1, 1], i * 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3)); g.setAttribute('aS', new THREE.BufferAttribute(s, 1)); g.setAttribute('aC', new THREE.BufferAttribute(c, 3));
+    const pts = new THREE.Points(g, new THREE.ShaderMaterial({ uniforms: { uPR: { value: PR } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: 'attribute float aS; attribute vec3 aC; uniform float uPR; varying vec3 vC; void main(){ vC = aC * (.6 + aS * .5); gl_PointSize = aS * uPR; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+      fragmentShader: 'varying vec3 vC; void main(){ float d = length(gl_PointCoord - .5); gl_FragColor = vec4(vC * smoothstep(.5, .0, d), 1.); }' })); pts.frustumCulled = false; return pts; };
+  const nebula = r => new THREE.Mesh(new THREE.SphereGeometry(r, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false,
+    vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `varying vec3 vD; ${NOISE} void main(){ float n = fbm(vD * 2.2 + 3.); float m = fbm(vD * 4.5 - 1.);
+      vec3 c = vec3(.004, .005, .012) + vec3(.05, .025, .03) * smoothstep(.45, .85, n) * m + vec3(.01, .03, .06) * smoothstep(.5, .9, m) * .8; gl_FragColor = vec4(c, 1.); }` }));
+  const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.12, 'rgba(255,250,235,.85)'); g.addColorStop(.3, 'rgba(255,215,150,.25)'); g.addColorStop(1, 'rgba(255,180,90,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+  const glowS = (col, s) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); m.scale.setScalar(s); return m; };
+  const ptags = [];
+  const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, metalness: 0, ...o });
+  const tagSprite = (txt, col = 'rgba(255,255,255,.92)') => { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const x = c.getContext('2d'); const draw = () => { x.clearRect(0, 0, 512, 96);
+    x.font = '800 38px Montserrat, Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = col; x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 10; x.fillText(txt, 256, 48); }; draw();
+    const t = new THREE.CanvasTexture(c); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false, opacity: 0 })); s.userData.redraw = () => { draw(); t.needsUpdate = true; }; s.renderOrder = 20; return s; };
+  const D2R = Math.PI / 180;
+  const dirAE = (az, el) => new THREE.Vector3(Math.sin(az * D2R) * Math.cos(el * D2R), Math.sin(el * D2R), -Math.cos(az * D2R) * Math.cos(el * D2R));
+  const showTag = (s, t, a, b, p, sc) => { const k = ss(a, a + .4, t) * (1 - ss(b - .3, b, t)); s.material.opacity = k; s.visible = k > .01; s.position.copy(p); s.scale.set(sc, sc * .1875, 1); };
+  const sph = (r, az, el) => new THREE.Vector3(Math.cos(el) * Math.sin(az) * r, Math.sin(el) * r, Math.cos(el) * Math.cos(az) * r);
+  const setCam = (pos, look, fov, roll = 0, near = .02, far = 3000) => { camera.position.copy(pos); camera.up.set(Math.sin(roll * D2R), Math.cos(roll * D2R), 0); camera.lookAt(look); camera.fov = fov; camera.near = near; camera.far = far; camera.updateProjectionMatrix(); };
+  // zgomot JS (pentru forma asteroizilor și relief)
+  const h3 = (x, y, z) => { let px = (x * .1031) % 1, py = (y * .1031) % 1, pz = (z * .1031) % 1; px += px < 0; py += py < 0; pz += pz < 0;
+    const dd = px * (pz + 31.32) + py * (py + 31.32) + pz * (px + 31.32); px += dd; py += dd; pz += dd; const r = ((px + py) * pz) % 1; return r < 0 ? r + 1 : r; };
+  const vn3 = (x, y, z) => { const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z); let fx = x - ix, fy = y - iy, fz = z - iz; fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy); fz = fz * fz * (3 - 2 * fz);
+    const L = (a, b, k) => a + (b - a) * k; const H = (a, b, c) => h3(ix + a, iy + b, iz + c);
+    return L(L(L(H(0, 0, 0), H(1, 0, 0), fx), L(H(0, 1, 0), H(1, 1, 0), fx), fy), L(L(H(0, 0, 1), H(1, 0, 1), fx), L(H(0, 1, 1), H(1, 1, 1), fx), fy), fz); };
+  const fb3 = (x, y, z) => { let a = .5, s = 0; for (let k = 0; k < 5; k++) { s += a * vn3(x, y, z); x *= 2.03; y *= 2.03; z *= 2.03; a *= .5; } return s; };
+  // asteroid: icosferă deformată (formă de cartof), cu cratere, material stâncos
+  const rockMat = () => { const m = new THREE.MeshStandardMaterial({ color: 0x6b6158, roughness: .95, metalness: 0 });
+    m.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vOP;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvOP = position;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vOP;\n' + NOISE).replace('#include <color_fragment>', `#include <color_fragment>
+        { float n = fbm(vOP * 4.), m = fbm(vOP * 18.), k = vnoise(vOP * 70.); diffuseColor.rgb = mix(vec3(.12, .105, .095), vec3(.3, .27, .24), n) * (.7 + .45 * m) * (.85 + .3 * k); }`); };
+    return m; };
+  function asteroidGeo(seed, detail = 5) {
+    const g = new THREE.SphereGeometry(1, 40 * detail / 2, 26 * detail / 2), p = g.attributes.position, v = new THREE.Vector3();
+    const cr = []; for (let i = 0; i < 22; i++) cr.push([new THREE.Vector3(rand() - .5, rand() - .5, rand() - .5).normalize(), .1 + Math.pow(rand(), 2) * .3]);
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = v.clone().normalize();
+      let r = 1 + (fb3(n.x * 1.2 + seed, n.y * 1.2, n.z * 1.2) - .5) * .75 + (fb3(n.x * 4.5 + seed, n.y * 4.5, n.z * 4.5) - .5) * .14 + (fb3(n.x * 14 + seed, n.y * 14, n.z * 14) - .5) * .03;
+      for (const [c, sz] of cr) { const d = n.distanceTo(c) / sz; if (d < 1) r -= .22 * sz * (1 - d * d); else if (d < 1.4) r += .06 * sz * Math.sin((d - 1) / .4 * Math.PI); }
+      v.copy(n).multiplyScalar(r); v.x *= 1.35; v.z *= .85; p.setXYZ(i, v.x, v.y, v.z); }
+    g.computeVertexNormals(); return g; }
+
+  // ---------- Momentele cheie ----------
+  const T_OFF = S[1].start - .35;                       // casca e scoasă
+  const T_EXH = capT(2, /aerul/) + .15;                 // aerul iese din plămâni
+  const T_FIZ = capT(3, /fiarbă/) - .2;                 // saliva fierbe
+  const T_FAINT = capT(5, /leșina/);                    // leșinul
+  const T_KNEEL = capT(6, /saliva/) - .2;               // tehnicianul cade în genunchi
+  const T_SAVE = capT(6, /supraviețuit/) - .3;          // camera e represurizată
+  const simT = t => t < T_OFF ? 0 : t < T_FAINT ? 15 * (t - T_OFF) / (T_FAINT - T_OFF) : 15 + (t - T_FAINT) * 1.15;
+
+  // ================= PLANETA (strat îndepărtat, raza Pământului = 1) =================
+  const SP = new THREE.Scene(); SP.add(nebula(1500)); SP.add(starField(1400, 3200));
+  const camP = new THREE.PerspectiveCamera(50, 9 / 16, 1e-5, 5000);
+  const SUN = new THREE.Vector3(.5, .12, -.85).normalize();
+  const sunS = glowS(new THREE.Color(7, 6.2, 5.2), 60); SP.add(sunS);
+  const EU = { tDay: { value: null }, tLand: { value: null }, uSun: { value: SUN.clone() }, uT: { value: 0 } };
+  const earth = new THREE.Group(); SP.add(earth);
+  earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 256, 128), new THREE.ShaderMaterial({ uniforms: EU,
+    vertexShader: 'varying vec2 vUv; varying vec3 vN, vW; void main(){ vUv = uv; vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: `uniform sampler2D tDay, tLand; uniform vec3 uSun; varying vec2 vUv; varying vec3 vN, vW;
+      void main(){ vec3 day = pow(texture2D(tDay, vUv).rgb, vec3(2.2)); float land = smoothstep(.35, .65, texture2D(tLand, vUv).r);
+        vec3 nn = normalize(vN), V = normalize(cameraPosition - vW), L = normalize(uSun); float lit = smoothstep(-.08, .3, dot(nn, L));
+        vec3 c = day * (.004 + 1.55 * lit);
+        c += vec3(1., .93, .8) * pow(max(dot(nn, normalize(V + L)), 0.), 220.) * (1. - land) * .5 * lit;
+        c += vec3(.25, .5, 1.) * pow(1. - max(dot(nn, V), 0.), 3.) * (.03 + .9 * lit);
+        gl_FragColor = vec4(c, 1.); }` })));
+  earth.add(new THREE.Mesh(new THREE.SphereGeometry(1.004, 192, 96), new THREE.ShaderMaterial({ uniforms: EU, transparent: true, depthWrite: false,
+    vertexShader: 'varying vec3 vP, vN; void main(){ vP = position; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `uniform vec3 uSun; varying vec3 vP, vN; ${NOISE} void main(){ float n = fbm(vP * 9.) * .6 + fbm(vP * 31.) * .4; float a = smoothstep(.56, .8, n);
+      float l = smoothstep(-.1, .35, dot(normalize(vN), normalize(uSun))); gl_FragColor = vec4(vec3(.02 + 1.25 * l), a * .9); }` })));
+  earth.add(new THREE.Mesh(new THREE.SphereGeometry(1.018, 128, 64), new THREE.ShaderMaterial({ uniforms: EU, side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: 'varying vec3 vN, vW; void main(){ vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: `uniform vec3 uSun; varying vec3 vN, vW; void main(){ vec3 V = normalize(cameraPosition - vW), nn = normalize(vN); float r = 1. - abs(dot(nn, V));
+      float s = smoothstep(-.3, .35, dot(nn, normalize(uSun))); vec3 col = mix(vec3(1., .45, .2), vec3(.3, .62, 1.), smoothstep(-.05, .3, dot(nn, normalize(uSun))));
+      gl_FragColor = vec4(col * pow(r, 4.) * 2.6 * s, 1.); }` })));
+  const ORB = new THREE.Vector3(0, 1.0628, 0);           // ~400 km altitudine
+  function updatePlanet(t, sunDir) {
+    EU.uT.value = t; EU.uSun.value.copy(sunDir); sunS.position.copy(sunDir).multiplyScalar(900);
+    earth.rotation.set(.35, 2.2 + t * .004, -.2);
+    camP.position.copy(ORB).add(camera.position.clone().multiplyScalar(1 / 6.371e6)); camP.quaternion.copy(camera.quaternion);
+    camP.fov = camera.fov; camP.aspect = camera.aspect; camP.updateProjectionMatrix();
+    return SP;
+  }
+
+  // ================= STAȚIA ȘI ASTRONAUTUL (strat local, în metri) =================
+  const LS = new THREE.Scene();
+  const lSun = new THREE.DirectionalLight(0xfff6ea, 2.4); LS.add(lSun, lSun.target);
+  const lEarth = new THREE.HemisphereLight(0x0a0c14, 0x5a8ac8, .9); LS.add(lEarth);
+  const white = std(0xf2f2ee, { roughness: .55 }), grey = std(0x8a8f96, { roughness: .45, metalness: .5 }), dkM = std(0x2a2d33, { roughness: .5, metalness: .4 });
+  // panouri solare: celule albastre cu grilă aurie
+  const panelM = new THREE.ShaderMaterial({ side: THREE.DoubleSide, uniforms: { uSun: { value: new THREE.Vector3() } },
+    vertexShader: 'varying vec2 vUv; varying vec3 vN; void main(){ vUv = uv; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `uniform vec3 uSun; varying vec2 vUv; varying vec3 vN; void main(){ vec2 g = fract(vUv * vec2(8., 40.)); float line = step(.94, max(g.x, g.y)); vec2 c2 = fract(vUv * vec2(1., 4.)); float seam = step(.985, c2.y);
+      float l = .35 + .9 * max(dot(normalize(vN), normalize(uSun)), 0.) + .25 * max(-dot(normalize(vN), normalize(uSun)), 0.);
+      vec3 c = mix(vec3(.05, .09, .2), vec3(.75, .55, .2), max(line * .8, seam)) * l; c += vec3(.25, .35, .6) * pow(1. - abs(normalize(vN).y), 4.) * .1; gl_FragColor = vec4(c, 1.); }` });
+  const station = new THREE.Group(); LS.add(station);
+  { const truss = new THREE.Mesh(new THREE.BoxGeometry(60, 1.6, 1.6), grey); station.add(truss);
+    for (let x = -30; x <= 30; x += 2) { const b = new THREE.Mesh(new THREE.BoxGeometry(.12, 1.7, 1.7), dkM); b.position.x = x; station.add(b); }
+    for (const sx of [-1, 1]) for (const k of [0, 1]) { const p = new THREE.Mesh(new THREE.PlaneGeometry(11, 34), panelM); p.position.set(sx * (20 + k * 12.5), 0, 0); p.rotation.x = Math.PI / 2 - .5; station.add(p);
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, 34, 8), grey); mast.rotation.x = Math.PI / 2 - .5 + Math.PI / 2; mast.position.copy(p.position); station.add(mast); }
+    const mod = (r, l, x, y, z, rot = 0) => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r, l, 32, 1), white); g.add(c);
+      for (let k = -l / 2 + .6; k < l / 2; k += 1.2) { const ring = new THREE.Mesh(new THREE.TorusGeometry(r + .02, .04, 6, 32), std(0xd8d8d0)); ring.rotation.x = Math.PI / 2; ring.position.y = k; g.add(ring); }
+      g.position.set(x, y, z); g.rotation.set(Math.PI / 2, 0, rot); station.add(g); return g; };
+    mod(2.1, 9, 0, -3.2, 0); mod(2.1, 7, 0, -3.2, -8); mod(2.1, 7, 0, -3.2, 8); mod(1.6, 5, 4.5, -3.2, 0, Math.PI / 2);
+    const rad = new THREE.Mesh(new THREE.BoxGeometry(3, .1, 12), white); rad.position.set(-6, .5, 4); station.add(rad);
+    station.position.set(0, -4, -26); station.rotation.set(.12, .5, .05); }
+  // astronautul: costum alb, rucsac, cască cu vizor auriu
+  function astronaut(silver = false) {
+    const suitM = silver ? std(0xc9ccd2, { roughness: .3, metalness: .75 }) : std(0xf4f4f0, { roughness: .7 }), jointM = silver ? std(0x9aa0a8, { roughness: .3, metalness: .8 }) : std(0xd9d9d2, { roughness: .7 });
+    const a = new THREE.Group(), body = new THREE.Group(); a.add(body);
+    const torso = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), suitM); torso.scale.set(.27, .36, .2); torso.position.y = 1.25; body.add(torso);
+    const hip = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), suitM); hip.scale.set(.22, .16, .17); hip.position.y = .9; body.add(hip);
+    if (!silver) { const pack = new THREE.Mesh(new THREE.BoxGeometry(.48, .62, .24), std(0xe8e8e2, { roughness: .6 })); pack.position.set(0, 1.27, -.27); body.add(pack);
+      const dcm = new THREE.Mesh(new THREE.BoxGeometry(.28, .14, .12), dkM); dcm.position.set(0, 1.18, .22); body.add(dcm);
+      const flag = new THREE.Mesh(new THREE.PlaneGeometry(.1, .06), std(0x2b56c8)); flag.position.set(-.27, 1.42, .02); flag.rotation.y = -Math.PI / 2; body.add(flag); }
+    const helmet = new THREE.Group(); helmet.position.set(0, 1.68, .02); body.add(helmet);
+    const shell = new THREE.Mesh(new THREE.SphereGeometry(.19, 40, 28), silver ? std(0xb8bcc4, { metalness: .8, roughness: .25 }) : std(0xf6f6f2, { roughness: .35 })); helmet.add(shell);
+    const visor = new THREE.Mesh(new THREE.SphereGeometry(.195, 40, 28, Math.PI / 2 - 1.0, 2.0, .55, 1.25), new THREE.MeshPhysicalMaterial({ color: silver ? 0x223040 : 0xd9a43a, metalness: 1, roughness: .12, clearcoat: 1, emissive: silver ? 0x05080c : 0x2a1a05 }));
+    visor.rotation.y = Math.PI / 2 * 0; helmet.add(visor);
+    const ringN = new THREE.Mesh(new THREE.TorusGeometry(.15, .025, 8, 28), jointM); ringN.rotation.x = Math.PI / 2; ringN.position.y = -.16; helmet.add(ringN);
+    const limb = (r1, r2, len) => { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, len, 16), suitM); m.position.y = -len / 2; g.add(m); const j = new THREE.Mesh(new THREE.SphereGeometry(r1 * 1.05, 16, 12), jointM); g.add(j); return g; };
+    const arms = [-1, 1].map(s => { const sh = limb(.085, .075, .32); sh.position.set(s * .3, 1.45, 0); body.add(sh); const el = limb(.072, .06, .3); el.position.y = -.32; sh.add(el);
+      const glove = new THREE.Mesh(new THREE.SphereGeometry(.065, 16, 12), std(silver ? 0x9aa0a8 : 0xeeeeea, { roughness: .6 })); glove.scale.set(1, 1.25, .8); glove.position.y = -.34; el.add(glove); return { sh, el }; });
+    const legs = [-1, 1].map(s => { const th = limb(.1, .085, .42); th.position.set(s * .12, .85, 0); body.add(th); const kn = limb(.085, .075, .42); kn.position.y = -.42; th.add(kn);
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(.13, .1, .26), std(0xdcdcd6)); boot.position.set(0, -.46, .05); kn.add(boot); return { th, kn }; });
+    a.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    return { a, body, helmet, arms, legs, visor };
+  }
+  const ast = astronaut(); LS.add(ast.a);
+  const loose = astronaut().helmet; LS.add(loose);    // casca scoasă, care plutește departe
+  // mâinile din perspectiva subiectivă
+  const pov = new THREE.Group(); LS.add(pov);
+  const povArms = [-1, 1].map(s => { const g = new THREE.Group(); const fore = new THREE.Mesh(new THREE.CylinderGeometry(.065, .075, .42, 16), std(0xf4f4f0, { roughness: .7 })); fore.rotation.x = Math.PI / 2; fore.position.z = .2; g.add(fore);
+    const cuff = new THREE.Mesh(new THREE.TorusGeometry(.07, .015, 8, 20), std(0x8a8f96, { metalness: .6, roughness: .3 })); cuff.position.z = -.01; g.add(cuff);
+    const glove = new THREE.Mesh(new THREE.SphereGeometry(.07, 20, 14), std(0xeeeeea, { roughness: .6 })); glove.scale.set(1, .8, 1.35); glove.position.z = -.07; g.add(glove);
+    g.position.set(s * .22, -.32, -.45); pov.add(g); return g; });
+  // aerul expirat (cristale de gheață) și „fierberea" salivei
+  const burst = (n, seed, speed, life) => { const g = new THREE.BufferGeometry(), p = new Float32Array(n * 3), v = []; for (let i = 0; i < n; i++) v.push(new THREE.Vector3((rand() - .5) * .8, (rand() - .5) * .6, -1 - rand()).normalize().multiplyScalar(speed * (.3 + rand())));
+    g.setAttribute('position', new THREE.BufferAttribute(p, 3)); const pts = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex, size: .03, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xdfefff }));
+    pts.frustumCulled = false; pts.update = (dt, origin) => { for (let i = 0; i < n; i++) { const k = Math.max(0, dt); p[i * 3] = origin.x + v[i].x * k; p[i * 3 + 1] = origin.y + v[i].y * k; p[i * 3 + 2] = origin.z + v[i].z * k; } g.attributes.position.needsUpdate = true; pts.material.opacity = dt < 0 ? 0 : Math.max(0, 1 - dt / life); }; LS.add(pts); return pts; };
+  const exh = burst(700, 1, 1.4, 2.6), fiz = burst(160, 2, .35, 1.2);
+  const glintS = glowS(new THREE.Color(5, 4.6, 4), 1); LS.add(glintS);
+
+  // ================= CAMERA DE VID, 1966 (alb-negru) =================
+  const CH = new THREE.Scene(); CH.fog = new THREE.FogExp2(0x101010, .05);
+  { const wallM = new THREE.ShaderMaterial({ side: THREE.BackSide, uniforms: { uL: { value: 1 } },
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+      fragmentShader: `uniform float uL; varying vec3 vP; ${NOISE} void main(){ float a = atan(vP.x, vP.y); vec2 q = vec2(a * 4., vP.z * .7); vec2 g = fract(q); float seam = step(.96, max(g.x, g.y));
+        float riv = 1. - smoothstep(.0, .04, length(fract(q * vec2(1., 4.)) - vec2(.5, .08)));
+        float n = fbm(vec3(q * 2., 1.)); vec3 c = vec3(.42, .42, .4) * (.7 + .4 * n) * (1. - seam * .6) + riv * .2; c *= (.55 + .45 * smoothstep(-3.5, 2., vP.y)) * uL; gl_FragColor = vec4(c, 1.); }` });
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.6, 14, 48, 1, true), wallM); cyl.rotation.x = Math.PI / 2; CH.add(cyl); CH.userData.wall = wallM;
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(5, 14), std(0x3a3a38, { roughness: .8, metalness: .4 })); fl.rotation.x = -Math.PI / 2; fl.position.y = -2.4; CH.add(fl);
+    for (let z = -6; z <= 6; z += .5) { const b = new THREE.Mesh(new THREE.BoxGeometry(5, .04, .06), dkM); b.position.set(0, -2.38, z); CH.add(b); }
+    const port = new THREE.Mesh(new THREE.CircleGeometry(.55, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 2.2, 2) })); port.position.set(-3.3, .6, -2); port.rotation.y = Math.PI / 2; CH.add(port);
+    const pr = new THREE.Mesh(new THREE.TorusGeometry(.6, .08, 10, 32), grey); pr.position.copy(port.position); pr.rotation.y = Math.PI / 2; CH.add(pr);
+    const lamps = []; for (let z = -5; z <= 5; z += 2.5) { const l = new THREE.PointLight(0xffffff, 1.2, 9, 2); l.position.set(0, 2.8, z); CH.add(l); lamps.push(l); const g = glowS(new THREE.Color(2.5, 2.5, 2.4), .9); g.position.set(0, 3.1, z); CH.add(g); }
+    CH.userData.lamps = lamps; CH.add(new THREE.HemisphereLight(0xffffff, 0x222222, .35)); }
+  const tech = astronaut(true); tech.a.position.set(0, -2.4, -1.5); tech.a.scale.setScalar(1.05); CH.add(tech.a);
+
+  // ---------- poze ----------
+  const poseFloat = (A, t, k = 1) => { A.body.rotation.set(.15 + Math.sin(t * .4) * .05, 0, Math.sin(t * .3) * .06);
+    A.arms[0].sh.rotation.set(-.3 + Math.sin(t * .7) * .1, 0, -.35); A.arms[1].sh.rotation.set(-.2, 0, .4 + Math.sin(t * .6) * .1); A.arms.forEach(a => a.el.rotation.set(-.5, 0, 0));
+    A.legs[0].th.rotation.set(-.25, 0, -.06); A.legs[1].th.rotation.set(.1, 0, .06); A.legs.forEach(l => l.kn.rotation.set(.45, 0, 0)); };
+  const poseGrab = (A, k) => { A.arms.forEach((a, i) => { const s = i ? 1 : -1; a.sh.rotation.set(lerp(-.3, -2.5, k), 0, s * lerp(.38, .35, k)); a.el.rotation.set(lerp(-.5, -1.25, k), 0, 0); }); };
+
+  function updateLocal(t, v) {
+    let sunDir = SUN.clone(); pov.visible = false; ast.a.visible = false; loose.visible = false; exh.visible = fiz.visible = false; glintS.visible = false; ast.helmet.visible = true;
+    let cp, cl, fov = 45, roll = 0;
+    if (v === 'outside' || v === 'final') {   // astronautul plutește lângă stație
+      ast.a.visible = true; ast.a.position.set(0, 0, 0); poseFloat(ast, t);
+      if (v === 'outside') { const u = eio(ss(0, T_OFF + .3, t)); poseGrab(ast, ss(S[1].start - 1.1, T_OFF, t));
+        cp = new THREE.Vector3(lerp(2.6, 1.5, u), lerp(1.9, 1.75, u), lerp(3.4, 2.1, u)); cl = new THREE.Vector3(0, lerp(1.3, 1.6, u), 0); fov = 44; roll = -6;
+      } else { const lt = t - S[7].start, u = clamp(lt / 6); ast.a.rotation.y = .4 + lt * .05; ast.arms[1].sh.rotation.set(-.4, 0, 2.3 + Math.sin(t * 6) * .25);
+        cp = new THREE.Vector3(lerp(-2.4, -3.2, u), lerp(1.8, 2.2, u), lerp(2.6, 3.6, u)); cl = new THREE.Vector3(0, 1.35, 0); fov = 46; roll = 4; }
+    } else {   // perspectivă subiectivă, fără cască
+      pov.visible = true; const lt = t - S[1].start;
+      cp = new THREE.Vector3(0, 1.7, 0);
+      let yaw = -.25 + lt * .01, pitch = -.18;
+      if (v === 'sunrise') sunDir = new THREE.Vector3(.6, lerp(-.25, .1, ss(S[4].start - .2, SEND(4), t)), -.8).normalize();
+      if (v === 'faint') { pitch = -.18 - ss(T_FAINT - .3, T_FAINT + 3, t) * .35; roll = ss(T_FAINT - .3, T_FAINT + 3.5, t) * 22; yaw += ss(T_FAINT, T_FAINT + 4, t) * .2; }
+      cl = cp.clone().add(new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)));
+      fov = v === 'swell' ? lerp(52, 60, ss(capT(3, /umfla/) - .3, SEND(3), t)) : 52;
+      // casca scoasă se îndepărtează, rotindu-se
+      const ht = t - T_OFF; loose.visible = ht > 0 && ht < 16; if (loose.visible) { loose.position.set(.25 + ht * .05, 1.55 + ht * .03, -.7 - ht * .38); loose.rotation.set(ht * .35, ht * .6, ht * .2); }
+      // aerul care iese din plămâni
+      exh.visible = true; exh.update(t - T_EXH, new THREE.Vector3(0, 1.62, -.12));
+      fiz.visible = true; fiz.update(((t - T_FIZ) % 1.4 + 1.4) % 1.4 * (t > T_FIZ && t < S[4].start ? 1 : -1), new THREE.Vector3(0, 1.6, -.1));
+      const sway = Math.sin(t * .9) * .015; povArms[0].position.set(-.22 + sway, -.33 + Math.sin(t * .7) * .01, -.45); povArms[1].position.set(.22 - sway, -.34 + Math.cos(t * .8) * .01, -.47);
+      povArms.forEach((g, i) => g.rotation.set(-.15, (i ? -1 : 1) * .22, 0));
+    }
+    setCam(cp, cl, fov, roll, .02, 600);
+    pov.position.copy(camera.position); pov.quaternion.copy(camera.quaternion);
+    lSun.position.copy(sunDir).multiplyScalar(50); lSun.intensity = 2.4 * ss(-.1, .05, sunDir.y + .2);
+    panelM.uniforms.uSun.value.copy(sunDir);
+    if (v === 'sunrise') { glintS.visible = true; glintS.position.copy(camera.position).addScaledVector(sunDir, 60); glintS.scale.setScalar(lerp(2, 18, ss(S[4].start, SEND(4), t))); }
+    return { sunDir };
+  }
+  function updateChamber(t) {
+    const lt = t - S[6].start, u = eio(clamp(lt / (S[7].start - S[6].start)));
+    const kn = ss(T_KNEEL, T_KNEEL + 1.2, t) * (1 - ss(T_SAVE + .4, T_SAVE + 1.8, t) * .6);
+    tech.body.position.y = -kn * .35; tech.body.rotation.set(kn * .35, 0, 0);
+    tech.legs.forEach(l => { l.th.rotation.set(-kn * 1.4, 0, 0); l.kn.rotation.set(kn * 1.9, 0, 0); });
+    tech.arms.forEach((a, i) => { a.sh.rotation.set(-.3 - kn * .9, 0, (i ? 1 : -1) * (.25 + kn * .2)); a.el.rotation.set(-.4 - kn * .6, 0, 0); });
+    const flick = t > T_KNEEL && t < T_SAVE ? .55 + .45 * (Math.sin(t * 37) > -.3 ? 1 : 0) : 1;
+    CH.userData.lamps.forEach(l => l.intensity = 1.2 * flick * (t > T_SAVE ? 1.4 : 1)); CH.userData.wall.uniforms.uL.value = flick;
+    setCam(new THREE.Vector3(lerp(1.9, 1.2, u), lerp(-.4, -.9, u), lerp(3.4, 1.6, u)), new THREE.Vector3(0, lerp(-.9, -1.3, u), -1.5), 48, -3, .05, 100);
+    return CH;
+  }
+
+  const viewAt = t => {
+    if (t < T_OFF + .25) return 'outside';
+    if (t < S[2].start - .2) return 'pov';
+    if (t < S[3].start - .2) return 'exhale';
+    if (t < S[4].start - .2) return 'swell';
+    if (t < S[5].start - .2) return 'sunrise';
+    if (t < S[6].start - .2) return 'faint';
+    if (t < S[7].start - .2) return 'chamber';
+    return 'final';
+  };
+
+  // ================= INTERFAȚA: monitor biometric, corp, notificări, alarmă =================
+  const prog = $('progI'), mon = $('mon'), mP = $('mP'), mPb = $('mPb'), mB = $('mB'), mO = $('mO'), mOb = $('mOb'), mT = $('mT'), mSt = $('mSt'), ecg = $('ecg'), ecx = ecg.getContext('2d');
+  const bodyEl = $('bodyS'), zones = { skin: $('zSkin'), lung: $('zLung'), mouth: $('zMouth'), brain: $('zBrain'), heat: $('zHeat') };
+  const chip = $('chip'), chipI = $('chipI'), chipT = $('chipT'), alarm = $('alarm'), tunnel = $('tunnel'), arch = $('arch'), grainEl = $('grain');
+  const CHIPS = [
+    [capT(1, /exploda/) - .05, S[2].start - .3, 'ok', '✓', 'NU EXPLODEZI'],
+    [capT(2, /plămânii/) - .1, S[3].start - .3, 'bad', '!', 'NU-ȚI ȚINE RESPIRAȚIA'],
+    [T_FIZ, capT(3, /umfla/) - .15, 'bad', '!', 'SALIVA FIERBE LA 36 °C'],
+    [capT(3, /umfla/) - .1, S[4].start - .3, 'warn', '!', 'CORPUL SE UMFLĂ'],
+    [capT(4, /îngheța/) - .05, S[5].start - .3, 'ok', '✓', 'NU ÎNGHEȚI PE LOC'],
+    [T_SAVE - .05, S[7].start - .3, 'ok', '✓', 'A SUPRAVIEȚUIT']
+  ];
+  let curChip = -1;
+  const ecgF = (ph) => Math.exp(-Math.pow((ph - .2) / .014, 2)) * .9 - Math.exp(-Math.pow((ph - .235) / .014, 2)) * .28 + Math.exp(-Math.pow((ph - .5) / .06, 2)) * .16 + Math.exp(-Math.pow((ph - .08) / .03, 2)) * .08;
+  const ecgDraw = (t, bpm) => { const w = ecg.width, h = ecg.height, span = 2.4; ecx.clearRect(0, 0, w, h);
+    ecx.strokeStyle = 'rgba(93,255,154,.14)'; ecx.lineWidth = 1; for (let x = 0; x < w; x += 20) { ecx.beginPath(); ecx.moveTo(x, 0); ecx.lineTo(x, h); ecx.stroke(); }
+    ecx.strokeStyle = '#5dff9a'; ecx.lineWidth = 2.2; ecx.shadowColor = '#5dff9a'; ecx.shadowBlur = 6; ecx.beginPath();
+    for (let x = 0; x <= w; x += 2) { const tt = t - (w - x) / w * span; const y = h * .68 - ecgF(((tt * bpm / 60) % 1 + 1) % 1) * h * .62; x ? ecx.lineTo(x, y) : ecx.moveTo(x, y); }
+    ecx.stroke(); ecx.shadowBlur = 0; ecx.fillStyle = '#d8ffe6'; const yE = h * .68 - ecgF(((t * bpm / 60) % 1 + 1) % 1) * h * .62; ecx.beginPath(); ecx.arc(w - 3, yE, 3, 0, 6.3); ecx.fill(); };
+  function updateUI(t) {
+    prog.style.transform = `scaleX(${clamp(t / TOTAL)})`;
+    const v = viewAt(t), st = simT(t);
+    const vac = t > T_OFF, faint = t > T_FAINT;
+    // monitorul: vizibil de la început până la arhivă
+    const monK = ss(T_OFF, T_OFF + .4, t) * (1 - ss(S[6].start - .5, S[6].start - .2, t));
+    mon.style.opacity = monK; bodyEl.style.opacity = monK; bodyEl.nextElementSibling.style.opacity = monK;
+    const kPa = vac ? lerp(29.6, 0, ss(T_OFF, T_OFF + .5, t)) : 29.6;
+    mP.textContent = kPa.toFixed(1).replace('.', ','); mPb.style.transform = `scaleX(${kPa / 101.3})`;
+    const bpm = !vac ? 78 : faint ? lerp(150, 105, ss(T_FAINT, T_FAINT + 4, t)) : lerp(78, 150, ss(T_OFF, T_OFF + 6, t));
+    mB.textContent = Math.round(bpm + Math.sin(t * 3) * 2);
+    const o2 = !vac ? 98 : lerp(98, 58, ss(T_OFF + 1, T_FAINT, t)) - (faint ? ss(T_FAINT, T_FAINT + 5, t) * 12 : 0);
+    mO.textContent = Math.round(o2); mOb.style.transform = `scaleX(${o2 / 100})`;
+    mT.textContent = '00:' + String(Math.floor(st)).padStart(2, '0') + ',' + String(Math.floor((st % 1) * 10));
+    mSt.textContent = !vac ? 'CASCĂ ETANȘĂ' : faint ? 'INCONȘTIENT' : 'ÎN VID'; mSt.className = 'st ' + (!vac ? 'ok' : faint ? 'bad' : 'warn');
+    if (monK > .01) ecgDraw(t, bpm);
+    // silueta: zonele afectate
+    const z = (el, a) => { el.style.opacity = a; };
+    z(zones.skin, v === 'pov' ? .9 : v === 'swell' ? .9 : 0); zones.skin.style.fill = v === 'swell' ? '#ffb347' : '#5dff9a';
+    bodyEl.style.transform = `scale(${1 + .07 * ss(capT(3, /umfla/) - .2, capT(3, /umfla/) + .6, t) * (1 - ss(S[4].start - .3, S[4].start, t))})`;
+    z(zones.lung, v === 'exhale' ? .55 + .45 * Math.abs(Math.sin(t * 6)) : 0);
+    z(zones.mouth, v === 'swell' && t < capT(3, /umfla/) ? .6 + .4 * Math.abs(Math.sin(t * 9)) : 0);
+    z(zones.heat, v === 'sunrise' ? .8 : 0);
+    z(zones.brain, v === 'faint' && faint ? .5 + .5 * Math.abs(Math.sin(t * 3)) : 0);
+    // notificări
+    let ci = -1; CHIPS.forEach((c, k) => { if (t >= c[0] && t < c[1]) ci = k; });
+    if (ci !== curChip) { curChip = ci; if (ci >= 0) { chip.className = 'chip ' + CHIPS[ci][2]; chipI.textContent = CHIPS[ci][3]; chipT.textContent = CHIPS[ci][4]; } }
+    if (ci >= 0) { const a = t - CHIPS[ci][0], o = CHIPS[ci][1] - t; const k = eout(a / .35); chip.style.opacity = clamp(a / .15) * clamp(o / .2); chip.style.transform = `translateX(${(1 - k) * 40}cqw) scale(${lerp(1.15, 1, eout(a / .5))})`; } else chip.style.opacity = 0;
+    // alarma de depresurizare
+    const al = t - T_OFF; alarm.style.opacity = al > 0 && al < 1.8 ? (Math.sin(al * 18) > 0 ? 1 : .35) * (1 - ss(1.4, 1.8, al)) : 0;
+    // vederea în tunel la leșin, inimă care bate
+    const fk = ss(T_FAINT - .4, T_FAINT + 2.5, t) * (v === 'faint' ? 1 : 0); tunnel.style.opacity = fk * (.85 + .15 * Math.sin(t * 6));
+    cvs.style.filter = v === 'chamber' ? 'grayscale(1) sepia(.35) contrast(1.25) brightness(1.05)' : fk > 0 ? `blur(${(fk * 3).toFixed(2)}px) saturate(${1 - fk * .6})` : 'none';
+    // arhiva 1966
+    const ak = v === 'chamber' ? 1 : 0; arch.style.opacity = ak; if (ak) grainEl.style.backgroundPosition = `${(t * 997) % 200}px ${(t * 613) % 200}px`;
+  }
+
+  // ---------- Text: titlu, HUD, „slam"-uri, subtitrări ----------
+  const capEl = $('cap'), titleEl = $('title'), hud = $('hud'), hL = $('hL'), hV = $('hV'), slamEl = $('slam'), slamBig = $('slamBig'), slamSub = $('slamSub'), endcard = $('endcard'), fadeEl = $('fade'), flashEl = $('flash');
+  const SLAMS = [
+    [capT(5, /15/) - .1, capT(5, /Și ai/) - .1, '15 SEC', 'până leșini', 'warm'],
+    [capT(5, /minut/) - .1, S[6].start - .25, '90 SEC', 'ca să fii salvat', 'sky']
+  ];
+  const CUTS = [T_OFF + .25, S[6].start - .2, S[7].start - .2];
+  let curSlam = -1, curCap = -1;
+  function updateText(t) {
+    titleEl.style.opacity = ss(.1, .5, t) * (1 - ss(S[1].start - .5, S[1].start - .2, t));
+    titleEl.style.transform = `translateY(${(1 - eout(t / .8)) * 3}cqw) scale(${1 + t * .01})`;
+    const v = viewAt(t);
+    hud.style.opacity = 0; updateUI(t);
+    let si = -1; SLAMS.forEach((s, k) => { if (t >= s[0] && t < s[1]) si = k; });
+    if (si !== curSlam) { curSlam = si; if (si >= 0) { const s = SLAMS[si]; slamEl.className = 'slam ' + s[4]; slamBig.textContent = s[2]; slamSub.textContent = s[3]; slamBig.style.fontSize = Math.min(17, 84 / (s[2].length * .5)).toFixed(1) + 'cqw'; } }
+    if (si >= 0) { const s = SLAMS[si], a = t - s[0], out = s[1] - t; const k = eout(a / .35);
+      slamEl.style.opacity = clamp(a / .2) * clamp(out / .2); slamEl.style.transform = `translateY(${(1 - k) * 3}cqw) scale(${lerp(.92, 1, k)})`; slamSub.style.opacity = clamp((a - .15) / .2); }
+    else slamEl.style.opacity = 0;
+    let si2 = -1, ci = -1;
+    for (let k = 0; k < S.length; k++) if (t >= S[k].start && t < SEND(k) + .3) { si2 = k; S[k].caps.forEach((c, j) => { if (t >= S[k].start + c[0] - .02) ci = j; }); }
+    const key = si2 * 100 + ci;
+    if (key !== curCap) { curCap = key; capEl.innerHTML = si2 >= 0 && ci >= 0 ? S[si2].caps[ci][1].replace(/\*(.+?)\*/g, '<span class="hl">$1</span>') : ''; }
+    if (si2 >= 0 && ci >= 0) { const a = t - (S[si2].start + S[si2].caps[ci][0]); const k = eout(a / .14); const k2 = eout(a / .22); capEl.style.transform = `translateY(${(1 - k) * 1.4}cqw) scale(${lerp(1.22, 1, k2)}) rotate(${(ci % 2 ? .8 : -.8) * (1 - k2)}deg)`; capEl.style.opacity = k; }
+    capEl.style.visibility = t > END + .2 ? 'hidden' : 'visible';
+    endcard.style.opacity = ss(END + .2, END + .8, t);
+    let f = 0; for (const c of CUTS) f = Math.max(f, 1 - Math.abs(t - c) / .18);
+    fadeEl.style.opacity = Math.max(clamp(f) * .95, RENDER ? 0 : 1 - ss(0, .4, t), ss(TOTAL - .6, TOTAL, t));
+    // fulgerul alb la impact și la mingea de foc
+    const imp = 0;
+    flashEl.style.opacity = Math.min(1, imp * .85);
+  }
+
+  // ---------- Sunet: voce + efecte + muzică ElevenLabs (aceeași listă e folosită la exportul MP4) ----------
+  const CUES = [];
+  {
+    const X = (at, name, gain, o = {}) => CUES.push({ at: Math.max(0, at), name, gain, fadeIn: o.fi ?? .08, fadeOut: o.fo ?? .6, dur: o.dur ?? null, offset: o.off ?? 0 });
+    X(0, 'space', .5, { fi: .4, dur: T_OFF + .4, fo: .3 });
+    X(.2, 'micro', .3, { fi: .2, fo: .8 });
+    X(T_OFF - .1, 'snap', .55, { fi: .01, fo: .4 });
+    X(T_OFF, 'alarms', .35, { fi: .02, dur: 1.9, fo: .5 });
+    X(T_OFF + .2, 'power', .3, { fi: .05, fo: 1 });
+    X(T_OFF + .3, 'heart', .4, { fi: .3, dur: T_FAINT - T_OFF + 2.5, fo: 1.2 });
+    X(T_OFF + .3, 'tension', .3, { fi: .8, dur: S[5].start - T_OFF, fo: .6 });
+    X(T_EXH - .1, 'whoosh', .45, { fi: .02, fo: .8 });
+    X(T_FIZ, 'shimmer', .3, { fi: .3, dur: S[4].start - T_FIZ, fo: .5 });
+    X(S[4].start - .2, 'sunrise', .45, { fi: .5, fo: 1.2 });
+    X(T_FAINT - .2, 'dark', .45, { fi: .5, dur: S[6].start - T_FAINT + .2, fo: .5 });
+    X(T_FAINT + .4, 'drone', .35, { fi: .5, fo: 1 });
+    X(S[6].start - .25, 'whoosh', .25, { fo: .4 });
+    X(S[6].start - .2, 'hum', .4, { fi: .4, dur: T_SAVE - S[6].start + .2, fo: .4 });
+    X(S[6].start, 'tension', .3, { fi: .6, off: 4, dur: T_SAVE - S[6].start, fo: .4 });
+    X(T_SAVE - .2, 'hope', .45, { fi: .8, dur: TOTAL - T_SAVE + .2, fo: 1.8 });
+    X(S[7].start - .25, 'whoosh', .2, { fo: .4 });
+  }
+  const DUCK = .6;
+  window.__cues = { voice: S.map((s, i) => ({ at: s.start, i })), sfx: CUES, duck: S.map((s, i) => [s.start - .1, SEND(i) + .15]), duckGain: DUCK, total: TOTAL, sfxGain: .9, voiceGain: 1 };
+  let ac = null, master, voiceBus, sfxBus, duckG, buffers = [], SFXB = {}, decoding = null;
+  const live = [];
+  function setupAudio() {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    ac = new AC();
+    master = ac.createGain(); master.gain.value = .9; master.connect(ac.destination);
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -10; comp.ratio.value = 3; comp.connect(master);
+    voiceBus = ac.createGain(); voiceBus.connect(comp);
+    duckG = ac.createGain(); duckG.connect(comp); sfxBus = ac.createGain(); sfxBus.gain.value = .9; sfxBus.connect(duckG);
+    const b64 = s => { const bin = atob(s), u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k); return u.buffer; };
+    const dec = ab => new Promise((res, rej) => { const p = ac.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+    decoding = Promise.all([Promise.all(AUDIO.map(s => dec(b64(s)))).then(b => { buffers = b; }), ...Object.entries(SFX).map(([k, v]) => dec(b64(v)).then(b => { SFXB[k] = b; }))]);
+    return decoding;
+  }
+  let t0 = 0;
+  function startAudio() {
+    live.splice(0).forEach(o => { try { o.stop(); } catch (e) {} });
+    t0 = ac.currentTime + .15;
+    buffers.forEach((b, i) => { const s = ac.createBufferSource(); s.buffer = b; s.connect(voiceBus); s.start(t0 + S[i].start); live.push(s); });
+    for (const c of CUES) { const b = SFXB[c.name]; if (!b) continue;
+      const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = b; const dur = Math.min(c.dur ?? 1e9, b.duration - c.offset), at = t0 + c.at;
+      g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(c.gain, at + c.fadeIn); g.gain.setValueAtTime(c.gain, Math.max(at + c.fadeIn, at + dur - c.fadeOut)); g.gain.linearRampToValueAtTime(0, at + dur);
+      s.connect(g); g.connect(sfxBus); s.start(at, c.offset, dur + .02); live.push(s); }
+    const dg = duckG.gain; dg.cancelScheduledValues(0); dg.setValueAtTime(1, t0);
+    for (const [a, b] of window.__cues.duck) { dg.setTargetAtTime(DUCK, t0 + a, .05); dg.setTargetAtTime(1, t0 + b, .12); }
+  }
+  let keepAlive = null;
+  function iosUnmute() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    if (keepAlive) { keepAlive.play().catch(() => {}); return; }
+    const sr = 8000, n = sr / 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const w = (o, s) => [...s].forEach((c, k) => v.setUint8(o + k, c.charCodeAt(0)));
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    keepAlive = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); keepAlive.play().catch(() => {});
+  }
+
+  // ---------- Redare ----------
+  const fontsReady = Promise.race([Promise.all(['400 60px Anton', '900 60px Montserrat', '800 40px Montserrat'].map(f => document.fonts.load(f))), new Promise(r => setTimeout(r, 5000))]).catch(() => {})
+    .then(() => ptags.forEach(s => s.userData.redraw()));
+  const texReady = Promise.all([loadTex(EARTH), loadTex(LANDM)]).then(([e, l]) => { EU.tDay.value = e; EU.tLand.value = l; });
+  { const c = document.createElement('canvas'); c.width = c.height = 200; const x = c.getContext('2d'), im = x.createImageData(200, 200); for (let k = 0; k < im.data.length; k += 4) { const v = rand() * 255; im.data[k] = im.data[k + 1] = im.data[k + 2] = v; im.data[k + 3] = 255; } x.putImageData(im, 0, 0); grainEl.style.backgroundImage = `url(${c.toDataURL()})`; }
+  function render3D(t) {
+    const v = viewAt(t);
+    if (v === 'chamber') present([[updateChamber(t), camera]], t, .8, 1.1);
+    else { const r = updateLocal(t, v); present([[updatePlanet(t, r.sunDir), camP], [LS, camera]], t, v === 'sunrise' ? 1.1 : .8, 1.05); }
+  }
+  function renderAt(t) { render3D(t); updateText(t); }
+  const assets = Promise.all([fontsReady, texReady]);
+  if (RENDER) {
+    $('start').hidden = true;
+    window.__ready = assets.then(() => { renderAt(0); renderAt(S[1].start + 1); renderAt(S[4].start + 1); renderAt(S[6].start + 1); renderAt(S[7].start + 1); renderAt(0); return { total: TOTAL }; });
+    window.__frame = t => { renderAt(t); return true; };
+    return;
+  }
+  const startEl = $('start'), pausedEl = $('paused'), endEl = $('end'), playBtn = $('playBtn'), sndBtn = $('snd');
+  let state = 'idle', fallbackT = 0, fallbackFrom = 0, muted = false;
+  const now = () => performance.now() / 1000;
+  const getT = () => { if (state === 'idle') return 0; if (ac && buffers.length) return Math.max(0, ac.currentTime - t0); return fallbackT + (state === 'playing' ? now() - fallbackFrom : 0); };
+  setupAudio();
+  Promise.all([assets, decoding || Promise.resolve()]).catch(() => {}).then(() => { playBtn.classList.remove('busy'); $('startHint').textContent = 'Cu sunet · ' + Math.floor(TOTAL / 60) + ':' + String(Math.round(TOTAL % 60)).padStart(2, '0'); });
+  function play() {
+    if (playBtn.classList.contains('busy')) return;
+    iosUnmute(); startEl.hidden = true; endEl.hidden = true; sndBtn.hidden = false; curCap = curSlam = -2;
+    if (ac) { ac.resume(); if (buffers.length) startAudio(); }
+    fallbackT = 0; fallbackFrom = now(); state = 'playing';
+  }
+  function pause() { if (state !== 'playing') return; state = 'paused'; fallbackT += now() - fallbackFrom; if (ac) ac.suspend(); pausedEl.hidden = false; }
+  function resume() { if (state !== 'paused') return; pausedEl.hidden = true; fallbackFrom = now(); state = 'playing'; iosUnmute(); if (ac) ac.resume(); }
+  function finish() { state = 'ended'; endEl.hidden = false; endEl.style.opacity = 1; sndBtn.hidden = true; }
+  playBtn.addEventListener('click', e => { e.stopPropagation(); play(); });
+  startEl.addEventListener('click', e => { e.stopPropagation(); play(); });
+  $('againBtn').addEventListener('click', e => { e.stopPropagation(); play(); });
+  pausedEl.addEventListener('click', e => { e.stopPropagation(); resume(); });
+  stage.addEventListener('click', e => { if (state === 'playing' && !e.target.closest('.snd')) pause(); });
+  sndBtn.addEventListener('click', e => { e.stopPropagation(); muted = !muted; if (master) master.gain.setTargetAtTime(muted ? 0 : .9, ac.currentTime, .05);
+    $('sndOn').hidden = muted; $('sndOff').hidden = !muted; sndBtn.setAttribute('aria-label', muted ? 'Pornește sunetul' : 'Oprește sunetul'); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+  function frame(ms) {
+    let t = getT();
+    if (state === 'playing' && t >= TOTAL) finish();
+    if (state === 'ended') t = TOTAL;
+    if (state === 'playing' && t >= END + 1.2) { endEl.hidden = false; endEl.style.opacity = ss(END + 1.2, END + 1.9, t); }
+    if (state === 'idle') { render3D(1.2 + (ms / 1000) % 2); } else renderAt(t);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
